@@ -15,7 +15,9 @@ export const updateCommand = new Command('update')
       }
 
       console.log('Checking for updates...');
-      const { updateAvailable, latestVersion } = await checkForUpdate();
+      const { updateAvailable, latestVersion } = await checkForUpdate({
+        bypassCache: true,
+      });
 
       if (!updateAvailable || !latestVersion) {
         console.log(`You are already using the latest version (${currentVersion}).`);
