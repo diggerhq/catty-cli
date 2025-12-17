@@ -14,6 +14,7 @@ import {
   printUpdateAvailable,
   promptForUpdate,
   runUpdate,
+  recordDeclinedUpdate,
 } from './lib/version-checker.js';
 
 // VERSION is replaced at build time by tsup
@@ -56,9 +57,9 @@ async function main() {
       'help',
     ];
     if (command && !skipUpdateCheck.includes(command)) {
-      const { updateAvailable, currentVersion, latestVersion } =
+      const { updateAvailable, currentVersion, latestVersion, shouldPrompt } =
         await checkForUpdate();
-      if (updateAvailable && latestVersion) {
+      if (updateAvailable && latestVersion && shouldPrompt) {
         printUpdateAvailable(currentVersion, latestVersion);
         const shouldUpdate = await promptForUpdate();
         if (shouldUpdate) {
@@ -68,6 +69,9 @@ async function main() {
             // Update failed, but don't exit the process
             // Error message already printed by runUpdate
           }
+        } else {
+          // User declined - record it so we don't ask again for 2 days
+          recordDeclinedUpdate(latestVersion);
         }
       }
     }
