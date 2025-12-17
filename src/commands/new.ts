@@ -11,6 +11,11 @@ export const newCommand = new Command('new')
   .option('--agent <name>', 'Agent to use: claude or codex', 'claude')
   .option('--no-upload', "Don't upload current directory")
   .option('--no-sync-back', 'Disable sync-back')
+  .option(
+    '--enable-prompts',
+    'Enable permission prompts (by default, all permissions are auto-approved)',
+    false
+  )
   .action(async function (this: Command) {
     const opts = this.opts();
     const apiAddr = getAPIAddr(this.optsWithGlobals().api);
@@ -24,11 +29,33 @@ export const newCommand = new Command('new')
 
     console.log('Creating session...');
 
+    // Determine command arguments based on agent and prompts setting
+    let cmdArgs: string[];
+    switch (opts.agent) {
+      case 'claude':
+        if (opts.enablePrompts) {
+          // User wants prompts - don't skip permissions
+          cmdArgs = ['claude-wrapper'];
+        } else {
+          // Default: auto-approve all permissions
+          cmdArgs = ['claude-wrapper', '--dangerously-skip-permissions'];
+        }
+        break;
+      case 'codex':
+        cmdArgs = ['codex'];
+        break;
+      default:
+        console.error(
+          `Unknown agent: ${opts.agent} (must be 'claude' or 'codex')`
+        );
+        process.exit(1);
+    }
+
     let session;
     try {
       session = await client.createSession({
         agent: opts.agent,
-        cmd: opts.agent === 'claude' ? ['claude-wrapper'] : ['codex'],
+        cmd: cmdArgs,
         region: 'iad',
         ttl_sec: 7200,
       });
