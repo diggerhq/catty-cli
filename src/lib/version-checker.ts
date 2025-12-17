@@ -10,9 +10,12 @@ declare const __VERSION__: string;
 interface VersionCache {
   latestVersion: string;
   lastChecked: number;
+  declinedVersion?: string;
+  declinedAt?: number;
 }
 
 const VERSION_CHECK_INTERVAL = 15 * 60 * 1000; // 15 minutes
+const DECLINED_VERSION_REMINDER_INTERVAL = 2 * 24 * 60 * 60 * 1000; // 2 days
 const NPM_REGISTRY_URL = 'https://registry.npmjs.org/@diggerhq/catty/latest';
 
 function getVersionCachePath(): string {
@@ -32,17 +35,23 @@ function getCachedVersion(): VersionCache | null {
   }
 }
 
-function setCachedVersion(version: string): void {
+function setCachedVersion(version: string, declined?: boolean): void {
   try {
     const cachePath = getVersionCachePath();
     const cacheDir = join(homedir(), CREDENTIALS_DIR);
     if (!existsSync(cacheDir)) {
       mkdirSync(cacheDir, { recursive: true });
     }
+
+    // Preserve existing declined info if not updating it
+    const existing = getCachedVersion();
     const cache: VersionCache = {
       latestVersion: version,
       lastChecked: Date.now(),
+      declinedVersion: declined ? version : existing?.declinedVersion,
+      declinedAt: declined ? Date.now() : existing?.declinedAt,
     };
+
     writeFileSync(cachePath, JSON.stringify(cache, null, 2));
   } catch {
     // Silently fail if we can't write cache
@@ -81,6 +90,7 @@ export async function checkForUpdate(): Promise<{
   updateAvailable: boolean;
   currentVersion: string;
   latestVersion: string | null;
+  shouldPrompt: boolean;
 }> {
   const currentVersion =
     typeof __VERSION__ !== 'undefined' ? __VERSION__ : 'dev';
@@ -91,6 +101,7 @@ export async function checkForUpdate(): Promise<{
       updateAvailable: false,
       currentVersion,
       latestVersion: null,
+      shouldPrompt: false,
     };
   }
 
@@ -116,15 +127,25 @@ export async function checkForUpdate(): Promise<{
       updateAvailable: false,
       currentVersion,
       latestVersion: null,
+      shouldPrompt: false,
     };
   }
 
   const updateAvailable = compareVersions(currentVersion, latestVersion);
 
+  // Check if user previously declined this version
+  let shouldPrompt = updateAvailable;
+  if (updateAvailable && cached?.declinedVersion === latestVersion && cached.declinedAt) {
+    // User declined this version - only prompt again after the reminder interval
+    const timeSinceDeclined = now - cached.declinedAt;
+    shouldPrompt = timeSinceDeclined >= DECLINED_VERSION_REMINDER_INTERVAL;
+  }
+
   return {
     updateAvailable,
     currentVersion,
     latestVersion,
+    shouldPrompt,
   };
 }
 
@@ -150,6 +171,10 @@ export async function promptForUpdate(): Promise<boolean> {
       resolve(normalized === '' || normalized === 'y' || normalized === 'yes');
     });
   });
+}
+
+export function recordDeclinedUpdate(version: string): void {
+  setCachedVersion(version, true);
 }
 
 function detectPackageManager(): string {

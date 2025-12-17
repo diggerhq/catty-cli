@@ -22,6 +22,7 @@ export const updateCommand = new Command('update')
         return;
       }
 
+      // When manually running update command, always update regardless of declined status
       await runUpdate(currentVersion, latestVersion);
     } catch (err) {
       if (err instanceof Error) {
