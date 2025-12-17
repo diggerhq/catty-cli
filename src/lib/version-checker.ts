@@ -7,6 +7,12 @@ import { CREDENTIALS_DIR } from './config.js';
 
 declare const __VERSION__: string;
 
+function logDebug(message: string): void {
+  if (process.env.DEBUG || process.env.CATTY_DEBUG) {
+    console.log(`\x1b[2m[DEBUG] ${message}\x1b[0m`);
+  }
+}
+
 interface VersionCache {
   latestVersion: string;
   lastChecked: number;
@@ -199,26 +205,30 @@ export async function runUpdate(
   console.log(`\nUpdating from ${currentVersion} to ${latestVersion}...\n`);
 
   const packageManager = detectPackageManager();
+  const packageName = `@diggerhq/catty@${latestVersion}`;
   let command: string;
   let args: string[];
 
   switch (packageManager) {
     case 'yarn':
       command = 'yarn';
-      args = ['global', 'add', '@diggerhq/catty@latest'];
+      args = ['global', 'add', packageName];
       break;
     case 'pnpm':
       command = 'pnpm';
-      args = ['add', '-g', '@diggerhq/catty@latest'];
+      args = ['add', '-g', packageName];
       break;
     case 'bun':
       command = 'bun';
-      args = ['install', '-g', '@diggerhq/catty@latest'];
+      args = ['install', '-g', packageName];
       break;
     default:
       command = 'npm';
-      args = ['install', '-g', '@diggerhq/catty@latest'];
+      args = ['install', '-g', packageName];
   }
+
+  logDebug(`Package manager: ${packageManager}`);
+  logDebug(`Command: ${command} ${args.join(' ')}`);
 
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
