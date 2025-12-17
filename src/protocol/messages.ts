@@ -9,6 +9,7 @@ export const MessageType = {
   SYNC_BACK: 'sync_back',
   SYNC_BACK_ACK: 'sync_back_ack',
   FILE_CHANGE: 'file_change',
+  FILE_UPLOAD: 'file_upload',
 } as const;
 
 export interface BaseMessage {
@@ -69,6 +70,14 @@ export interface FileChangeMessage {
   mode?: number;
 }
 
+export interface FileUploadMessage {
+  type: 'file_upload';
+  filename: string;
+  remote_path: string;
+  content: string; // base64 encoded
+  mime_type: string;
+}
+
 export type Message =
   | ResizeMessage
   | SignalMessage
@@ -80,6 +89,7 @@ export type Message =
   | SyncBackMessage
   | SyncBackAckMessage
   | FileChangeMessage
+  | FileUploadMessage
   | BaseMessage;
 
 export function parseMessage(data: string): Message {
@@ -106,6 +116,8 @@ export function parseMessage(data: string): Message {
       return JSON.parse(data) as SyncBackAckMessage;
     case MessageType.FILE_CHANGE:
       return JSON.parse(data) as FileChangeMessage;
+    case MessageType.FILE_UPLOAD:
+      return JSON.parse(data) as FileUploadMessage;
     default:
       return base;
   }
@@ -129,4 +141,19 @@ export function createPongMessage(): string {
 
 export function createSyncBackMessage(enabled: boolean): string {
   return JSON.stringify({ type: MessageType.SYNC_BACK, enabled });
+}
+
+export function createFileUploadMessage(
+  filename: string,
+  remotePath: string,
+  content: Buffer,
+  mimeType: string
+): string {
+  return JSON.stringify({
+    type: MessageType.FILE_UPLOAD,
+    filename,
+    remote_path: remotePath,
+    content: content.toString('base64'),
+    mime_type: mimeType,
+  });
 }
