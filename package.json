@@ -1,0 +1,47 @@
+{
+  "name": "cattycli",
+  "version": "0.3.6",
+  "description": "Catty - Remote AI agent sessions",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "catty": "./bin/catty.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "build": "tsup && npm run build:bin",
+    "build:bin": "mkdir -p bin && cp scripts/catty-bin.js bin/catty.js && chmod +x bin/catty.js",
+    "dev": "tsup --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "catty",
+    "ai",
+    "agent",
+    "claude",
+    "codex",
+    "remote"
+  ],
+  "author": "DiggerHQ",
+  "license": "MIT",
+  "dependencies": {
+    "archiver": "^7.0.1",
+    "commander": "^12.1.0",
+    "ignore": "^5.3.2",
+    "open": "^10.1.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/archiver": "^6.0.2",
+    "@types/node": "^22.0.0",
+    "@types/ws": "^8.5.12",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.0"
+  },
+  "files": [
+    "dist",
+    "bin"
+  ]
+}
