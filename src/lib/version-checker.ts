@@ -86,7 +86,9 @@ function compareVersions(current: string, latest: string): boolean {
   return false;
 }
 
-export async function checkForUpdate(): Promise<{
+export async function checkForUpdate(options?: {
+  bypassCache?: boolean;
+}): Promise<{
   updateAvailable: boolean;
   currentVersion: string;
   latestVersion: string | null;
@@ -105,13 +107,13 @@ export async function checkForUpdate(): Promise<{
     };
   }
 
-  // Check cache first
+  // Check cache first (unless bypassing)
   const cached = getCachedVersion();
   const now = Date.now();
 
   let latestVersion: string | null = null;
 
-  if (cached && now - cached.lastChecked < VERSION_CHECK_INTERVAL) {
+  if (!options?.bypassCache && cached && now - cached.lastChecked < VERSION_CHECK_INTERVAL) {
     // Use cached version
     latestVersion = cached.latestVersion;
   } else {
