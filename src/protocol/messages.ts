@@ -10,6 +10,7 @@ export const MessageType = {
   SYNC_BACK_ACK: 'sync_back_ack',
   FILE_CHANGE: 'file_change',
   FILE_UPLOAD: 'file_upload',
+  FILE_UPLOAD_CHUNK: 'file_upload_chunk',
 } as const;
 
 export interface BaseMessage {
@@ -78,6 +79,17 @@ export interface FileUploadMessage {
   mime_type: string;
 }
 
+export interface FileUploadChunkMessage {
+  type: 'file_upload_chunk';
+  upload_id: string;
+  filename: string;
+  remote_path: string;
+  chunk_index: number;
+  total_chunks: number;
+  content: string; // base64 encoded chunk
+  mime_type: string;
+}
+
 export type Message =
   | ResizeMessage
   | SignalMessage
@@ -90,6 +102,7 @@ export type Message =
   | SyncBackAckMessage
   | FileChangeMessage
   | FileUploadMessage
+  | FileUploadChunkMessage
   | BaseMessage;
 
 export function parseMessage(data: string): Message {
@@ -154,6 +167,27 @@ export function createFileUploadMessage(
     filename,
     remote_path: remotePath,
     content: content.toString('base64'),
+    mime_type: mimeType,
+  });
+}
+
+export function createFileUploadChunkMessage(
+  uploadId: string,
+  filename: string,
+  remotePath: string,
+  chunkIndex: number,
+  totalChunks: number,
+  content: string, // already base64 encoded
+  mimeType: string
+): string {
+  return JSON.stringify({
+    type: MessageType.FILE_UPLOAD_CHUNK,
+    upload_id: uploadId,
+    filename,
+    remote_path: remotePath,
+    chunk_index: chunkIndex,
+    total_chunks: totalChunks,
+    content,
     mime_type: mimeType,
   });
 }

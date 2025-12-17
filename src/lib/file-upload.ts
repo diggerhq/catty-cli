@@ -1,5 +1,14 @@
-import { readFileSync, statSync } from 'fs';
+import { readFileSync, statSync, appendFileSync } from 'fs';
 import { basename, extname } from 'path';
+import { homedir } from 'os';
+
+// Debug logging to file (avoids terminal corruption)
+function debugLog(msg: string): void {
+  if (process.env.CATTY_DEBUG === '1') {
+    const logFile = `${homedir()}/.catty-debug.log`;
+    appendFileSync(logFile, `${new Date().toISOString()} ${msg}\n`);
+  }
+}
 
 // Supported file types for auto-upload
 const IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.svg'];
@@ -8,6 +17,9 @@ const SUPPORTED_EXTENSIONS = [...IMAGE_EXTENSIONS, ...DOCUMENT_EXTENSIONS];
 
 // Max file size for auto-upload (10MB)
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+// Chunk size for large file uploads (10KB raw = ~13KB base64)
+export const CHUNK_SIZE = 10 * 1024;
 
 export interface FileUploadResult {
   shouldUpload: boolean;
@@ -20,29 +32,96 @@ export interface FileUploadResult {
 
 /**
  * Detects if input contains a file path that should be uploaded
+ * Returns the first valid file path found
  */
 export function detectFilePath(input: string): string | null {
-  // Look for absolute paths (macOS/Linux)
-  const unixPathMatch = input.match(/(?:^|\s)(\/[^\s]+)(?:\s|$)/);
-  if (unixPathMatch) {
-    return unixPathMatch[1].trim();
+  const paths = detectFilePaths(input);
+  return paths.length > 0 ? paths[0] : null;
+}
+
+/**
+ * Detects all file paths in input that could be uploaded
+ * Returns array of valid file paths
+ */
+export function detectFilePaths(input: string): string[] {
+  const trimmed = input.trim();
+  
+  debugLog(`detectFilePaths input: ${JSON.stringify(trimmed)}`);
+  
+  // Handle escaped paths (e.g., /path/to/Screenshot\ 2024-12-17\ at\ 10.30.png)
+  // Split on unescaped spaces to handle multiple files
+  // An unescaped space is a space NOT preceded by a backslash
+  const rawPaths = splitOnUnescapedSpaces(trimmed);
+  
+  debugLog(`split paths: ${JSON.stringify(rawPaths)}`);
+  
+  const validPaths: string[] = [];
+  
+  for (const rawPath of rawPaths) {
+    // Unescape the path (convert "\ " to " ")
+    const unescaped = rawPath.replace(/\\ /g, ' ');
+    
+    // Skip empty
+    if (!unescaped) continue;
+    
+    // Handle tilde expansion
+    const expanded = unescaped.startsWith('~') 
+      ? unescaped.replace(/^~/, process.env.HOME || '~')
+      : unescaped;
+    
+    // Check if it's an absolute path
+    if (!expanded.startsWith('/') && !expanded.match(/^[A-Za-z]:\\/)) {
+      debugLog(`skipping non-absolute: ${expanded}`);
+      continue;
+    }
+    
+    // Check if file exists
+    try {
+      statSync(expanded);
+      debugLog(`found file: ${expanded}`);
+      validPaths.push(expanded);
+    } catch (err) {
+      debugLog(`file not found: ${expanded} - ${err}`);
+      // File doesn't exist, try next
+      continue;
+    }
   }
 
-  // Look for absolute paths (Windows)
-  const winPathMatch = input.match(/(?:^|\s)([A-Za-z]:\\[^\s]+)(?:\s|$)/);
-  if (winPathMatch) {
-    return winPathMatch[1].trim();
-  }
+  debugLog(`found ${validPaths.length} valid files`);
+  return validPaths;
+}
 
-  // Look for paths with tilde expansion
-  const tildeMatch = input.match(/(?:^|\s)(~\/[^\s]+)(?:\s|$)/);
-  if (tildeMatch) {
-    const path = tildeMatch[1].trim();
-    // Expand tilde to home directory
-    return path.replace(/^~/, process.env.HOME || '~');
+/**
+ * Split string on unescaped spaces (spaces not preceded by backslash)
+ */
+function splitOnUnescapedSpaces(input: string): string[] {
+  const results: string[] = [];
+  let current = '';
+  let i = 0;
+  
+  while (i < input.length) {
+    if (input[i] === '\\' && i + 1 < input.length && input[i + 1] === ' ') {
+      // Escaped space - keep it (including the backslash for now)
+      current += '\\ ';
+      i += 2;
+    } else if (input[i] === ' ') {
+      // Unescaped space - split here
+      if (current) {
+        results.push(current);
+        current = '';
+      }
+      i++;
+    } else {
+      current += input[i];
+      i++;
+    }
   }
-
-  return null;
+  
+  if (current) {
+    results.push(current);
+  }
+  
+  return results;
 }
 
 /**
@@ -114,11 +193,16 @@ function getMimeType(ext: string): string {
 
 /**
  * Generate a unique filename to avoid collisions
+ * Also sanitizes the filename to remove spaces and special characters
  */
 export function generateUniqueFilename(originalFilename: string): string {
   const timestamp = Date.now();
   const ext = extname(originalFilename);
   const nameWithoutExt = basename(originalFilename, ext);
-  return `${nameWithoutExt}-${timestamp}${ext}`;
+  // Sanitize: replace spaces with underscores, remove other problematic chars
+  const sanitized = nameWithoutExt
+    .replace(/\s+/g, '_')           // spaces -> underscores
+    .replace(/[^a-zA-Z0-9_-]/g, ''); // remove other special chars
+  return `${sanitized}-${timestamp}${ext}`;
 }
 
