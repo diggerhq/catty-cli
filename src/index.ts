@@ -8,6 +8,13 @@ import { stopAllCommand } from './commands/stopall.js';
 import { loginCommand } from './commands/login.js';
 import { logoutCommand } from './commands/logout.js';
 import { versionCommand } from './commands/version.js';
+import { updateCommand } from './commands/update.js';
+import {
+  checkForUpdate,
+  printUpdateAvailable,
+  promptForUpdate,
+  runUpdate,
+} from './lib/version-checker.js';
 
 // VERSION is replaced at build time by tsup
 declare const __VERSION__: string;
@@ -27,6 +34,7 @@ program.addCommand(stopAllCommand, { hidden: true });
 program.addCommand(loginCommand);
 program.addCommand(logoutCommand);
 program.addCommand(versionCommand);
+program.addCommand(updateCommand);
 
 // Handle errors gracefully
 program.exitOverride();
@@ -34,6 +42,35 @@ program.exitOverride();
 async function main() {
   try {
     await program.parseAsync(process.argv);
+
+    // Check for updates after command execution
+    // Skip if running version, update, or help commands
+    const command = process.argv[2];
+    const skipUpdateCheck = [
+      'version',
+      'update',
+      '-v',
+      '--version',
+      '-h',
+      '--help',
+      'help',
+    ];
+    if (command && !skipUpdateCheck.includes(command)) {
+      const { updateAvailable, currentVersion, latestVersion } =
+        await checkForUpdate();
+      if (updateAvailable && latestVersion) {
+        printUpdateAvailable(currentVersion, latestVersion);
+        const shouldUpdate = await promptForUpdate();
+        if (shouldUpdate) {
+          try {
+            await runUpdate(currentVersion, latestVersion);
+          } catch (err) {
+            // Update failed, but don't exit the process
+            // Error message already printed by runUpdate
+          }
+        }
+      }
+    }
   } catch (err: unknown) {
     if (err instanceof Error) {
       // Commander throws for help/version, ignore those
