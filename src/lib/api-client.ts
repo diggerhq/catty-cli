@@ -187,4 +187,16 @@ export class APIClient {
     const data = await this.handleResponse<{ url: string }>(response);
     return data.url;
   }
+
+  async getSessionDownload(
+    idOrLabel: string
+  ): Promise<{ download_url: string; size_bytes?: number }> {
+    const response = await this.doRequestWithRefresh(
+      'GET',
+      `/v1/sessions/${idOrLabel}/download`
+    );
+    return this.handleResponse<{ download_url: string; size_bytes?: number }>(
+      response
+    );
+  }
 }

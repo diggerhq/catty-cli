@@ -9,6 +9,8 @@ import { loginCommand } from './commands/login.js';
 import { logoutCommand } from './commands/logout.js';
 import { versionCommand } from './commands/version.js';
 import { updateCommand } from './commands/update.js';
+import { secretsCommand } from './commands/secrets.js';
+import { downloadCommand } from './commands/download.js';
 import {
   checkForUpdate,
   printUpdateAvailable,
@@ -36,6 +38,8 @@ program.addCommand(loginCommand);
 program.addCommand(logoutCommand);
 program.addCommand(versionCommand);
 program.addCommand(updateCommand);
+program.addCommand(secretsCommand);
+program.addCommand(downloadCommand);
 
 // Handle errors gracefully
 program.exitOverride();
