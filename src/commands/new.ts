@@ -1,16 +1,20 @@
 import { Command } from 'commander';
 import open from 'open';
-import { getAPIAddr } from '../lib/config.js';
+import { getAPIAddr, sleep } from '../lib/config.js';
 import { isLoggedIn } from '../lib/auth.js';
 import { APIClient, APIError } from '../lib/api-client.js';
-import { connectToSession } from '../lib/websocket.js';
+import { connectToSession, type ConnectionResult } from '../lib/websocket.js';
 import { uploadWorkspace, buildUploadURL } from '../lib/workspace.js';
+
+const MAX_RECONNECT_ATTEMPTS = 5;
+const RECONNECT_DELAY_MS = 2000;
 
 export const newCommand = new Command('new')
   .description('Start a new remote agent session')
   .option('--agent <name>', 'Agent to use: claude or codex', 'claude')
   .option('--no-upload', "Don't upload current directory")
   .option('--no-sync-back', 'Disable sync-back')
+  .option('--no-auto-reconnect', 'Disable automatic reconnection on disconnect')
   .option(
     '--enable-prompts',
     'Enable permission prompts (by default, all permissions are auto-approved)',
@@ -19,6 +23,7 @@ export const newCommand = new Command('new')
   .action(async function (this: Command) {
     const opts = this.opts();
     const apiAddr = getAPIAddr(this.optsWithGlobals().api);
+    const autoReconnect = opts.autoReconnect !== false;
 
     if (!isLoggedIn()) {
       console.error("Not logged in. Please run 'catty login' first.");
@@ -87,6 +92,71 @@ export const newCommand = new Command('new')
       headers: {},
       syncBack: opts.syncBack !== false,
     });
+    // Connection loop with auto-reconnect
+    let reconnectAttempts = 0;
+
+    while (true) {
+      try {
+        const result: ConnectionResult = await connectToSession({
+          connectURL: session.connect_url,
+          connectToken: session.connect_token,
+          headers: session.headers,
+          syncBack: opts.syncBack !== false,
+        });
+
+        // Handle the connection result
+        if (result.type === 'exit') {
+          // Clean exit - process ended normally
+          process.exit(result.code);
+        } else if (result.type === 'interrupted') {
+          // User pressed Ctrl+C - exit cleanly, don't reconnect
+          process.exit(130);
+        } else if (result.type === 'replaced') {
+          // Connection was replaced by another client - don't reconnect
+          console.log('Session taken over by another client.');
+          process.exit(0);
+        } else if (result.type === 'disconnected') {
+          // Connection lost - try to reconnect
+          if (!autoReconnect) {
+            console.error(`Disconnected: ${result.reason}`);
+            process.exit(1);
+          }
+
+          reconnectAttempts++;
+          if (reconnectAttempts > MAX_RECONNECT_ATTEMPTS) {
+            console.error(`\x1b[31m✗ Failed to reconnect after ${MAX_RECONNECT_ATTEMPTS} attempts\x1b[0m`);
+            console.error(`Run 'catty connect ${session.label}' to try again manually.`);
+            process.exit(1);
+          }
+
+          console.log(`\x1b[33m⟳ Reconnecting (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...\x1b[0m`);
+          await sleep(RECONNECT_DELAY_MS);
+
+          // Refresh session info before reconnecting
+          try {
+            session = await client.getSession(session.label, true);
+            if (session.status === 'stopped') {
+              console.error(`\x1b[31m✗ Session has stopped\x1b[0m`);
+              process.exit(1);
+            }
+          } catch {
+            // Session lookup failed, try with existing info
+          }
+        }
+      } catch (err) {
+        if (reconnectAttempts > 0 && autoReconnect) {
+          reconnectAttempts++;
+          if (reconnectAttempts > MAX_RECONNECT_ATTEMPTS) {
+            console.error(`\x1b[31m✗ Failed to reconnect after ${MAX_RECONNECT_ATTEMPTS} attempts\x1b[0m`);
+            process.exit(1);
+          }
+          console.error(`\x1b[33m⟳ Reconnect failed, retrying (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...\x1b[0m`);
+          await sleep(RECONNECT_DELAY_MS);
+        } else {
+          throw err;
+        }
+      }
+    }
   });
 
 async function handleQuotaExceeded(client: APIClient): Promise<void> {
