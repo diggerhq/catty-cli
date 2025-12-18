@@ -35,7 +35,7 @@ export const connectCommand = new Command('connect')
     await connectToSession({
       connectURL: session.connect_url,
       connectToken: session.connect_token!,
-      headers: { 'fly-force-instance-id': session.machine_id },
+      headers: {},
       syncBack: opts.syncBack,
     });
   });

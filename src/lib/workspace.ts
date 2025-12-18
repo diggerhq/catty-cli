@@ -89,8 +89,7 @@ function walkDir(
 
 export async function uploadWorkspace(
   uploadURL: string,
-  token: string,
-  machineID: string
+  token: string
 ): Promise<void> {
   const cwd = process.cwd();
   const zipData = await createWorkspaceZip(cwd);
@@ -106,7 +105,6 @@ export async function uploadWorkspace(
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/zip',
-      'fly-force-instance-id': machineID,
     },
     body: zipData,
   });

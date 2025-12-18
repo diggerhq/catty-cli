@@ -75,11 +75,7 @@ export const newCommand = new Command('new')
       console.log('Uploading workspace...');
       const uploadURL = buildUploadURL(session.connect_url);
 
-      await uploadWorkspace(
-        uploadURL,
-        session.connect_token,
-        session.headers['fly-force-instance-id']
-      );
+      await uploadWorkspace(uploadURL, session.connect_token);
       console.log('Workspace uploaded.');
     }
 
@@ -88,7 +84,7 @@ export const newCommand = new Command('new')
     await connectToSession({
       connectURL: session.connect_url,
       connectToken: session.connect_token,
-      headers: session.headers,
+      headers: {},
       syncBack: opts.syncBack !== false,
     });
   });
