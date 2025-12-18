@@ -1,9 +1,9 @@
 ---
-title: "Workspace Sync"
-description: "How files are synchronized between your local machine and the cloud session"
+title: "Workspace & Files"
+description: "Upload your workspace, sync changes, and share images with Claude"
 ---
 
-Catty provides bidirectional file synchronization between your local directory and the remote session.
+Catty provides bidirectional file synchronization between your local directory and the remote session, plus the ability to upload images and documents during a session.
 
 ## Upload (Local to Remote)
 
@@ -61,6 +61,54 @@ Useful when:
 - Your workspace is too large
 - You want an empty session
 - You'll clone a repo in the session instead
+
+## File Upload (During Session)
+
+You can upload images and documents to an active session by dragging and dropping file paths into your terminal.
+
+### How It Works
+
+1. Drag a file from Finder/Explorer into your terminal
+2. The file path appears in the input
+3. Press Enter - Catty detects the file and uploads it
+4. The file is available at `/workspace/.catty-uploads/<filename>`
+5. Claude can then view and work with the file
+
+### Supported File Types
+
+<CardGroup cols={2}>
+  <Card title="Images" icon="image">
+    PNG, JPG, JPEG, GIF, WEBP, BMP, SVG
+  </Card>
+
+  <Card title="Documents" icon="file">
+    PDF, TXT, MD, JSON, XML, CSV
+  </Card>
+</CardGroup>
+
+### Limits
+
+| Limit | Value |
+|-------|-------|
+| Maximum file size | 10 MB |
+| Supported paths | Absolute paths only |
+
+### Examples
+
+```bash
+# Drag and drop a screenshot
+/Users/you/Desktop/Screenshot 2024-12-17.png
+
+# Upload a PDF for Claude to analyze
+/Users/you/Documents/report.pdf
+
+# Multiple files (space-separated)
+/path/to/image1.png /path/to/image2.png
+```
+
+<Tip>
+  Paths with spaces are automatically handled. Both `/path/to/my file.png` and `/path/to/my\ file.png` work.
+</Tip>
 
 ## Sync-Back (Remote to Local)
 
@@ -131,45 +179,6 @@ catty connect brave-tiger-1234 --no-sync-back
 <Note>
   Disabling sync-back means you'll need to manually retrieve any files Claude creates or modifies.
 </Note>
-
-## Protocol Details
-
-Sync-back uses WebSocket text frames with JSON messages:
-
-### File Change Message (Server to Client)
-
-```json
-{
-  "type": "file_change",
-  "path": "src/main.go",
-  "action": "write",
-  "content": "cGFja2FnZSBtYWluLi4u"
-}
-```
-
-| Field | Description |
-|-------|-------------|
-| `type` | Always `"file_change"` |
-| `path` | Relative path from workspace root |
-| `action` | `"write"` or `"delete"` |
-| `content` | Base64-encoded file content (for writes) |
-
-### Enable Sync-Back Message (Client to Server)
-
-```json
-{
-  "type": "sync_back",
-  "enabled": true
-}
-```
-
-### Acknowledgment (Server to Client)
-
-```json
-{
-  "type": "sync_back_ack"
-}
-```
 
 ## Best Practices
 
