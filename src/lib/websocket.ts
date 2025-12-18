@@ -5,6 +5,7 @@ import { Terminal } from './terminal.js';
 import {
   SYNC_BACK_ACK_TIMEOUT_MS,
   WS_POLICY_VIOLATION,
+  WS_READ_TIMEOUT_MS,
 } from './config.js';
 import {
   parseMessage,
@@ -34,6 +35,13 @@ function debugLog(msg: string): void {
   }
 }
 
+// Connection result types
+export type ConnectionResult = 
+  | { type: 'exit'; code: number }
+  | { type: 'disconnected'; reason: string }
+  | { type: 'replaced' }
+  | { type: 'interrupted' };  // User pressed Ctrl+C
+
 // Bracketed paste escape sequences
 const PASTE_START = '\x1b[200~';
 const PASTE_END = '\x1b[201~';
@@ -48,7 +56,7 @@ export interface WebSocketConnectOptions {
 
 export async function connectToSession(
   opts: WebSocketConnectOptions
-): Promise<void> {
+): Promise<ConnectionResult> {
   const terminal = new Terminal();
 
   if (!terminal.isTerminal()) {
@@ -60,16 +68,101 @@ export async function connectToSession(
       ...opts.headers,
       Authorization: `Bearer ${opts.connectToken}`,
     },
+    handshakeTimeout: 30_000, // 30s timeout for initial connection
   });
 
   return new Promise((resolve, reject) => {
     let syncBackAcked = false;
     let exitCode = 0;
+    let connectionClosed = false;
+    let connectionOpened = false;
+    let userInterrupted = false;  // Track if user pressed Ctrl+C
+    let resolved = false;  // Prevent double resolution
+
+    // Safe resolve that only runs once
+    const safeResolve = (result: ConnectionResult) => {
+      if (resolved) return;
+      resolved = true;
+      resolve(result);
+    };
 
     // Paste detection state
     let inPaste = false;
     let pasteBuffer = '';
     let inputBuffer = '';
+
+    // Double Ctrl+C detection - if user presses Ctrl+C twice within 1 second, exit catty
+    let lastCtrlC = 0;
+    const DOUBLE_CTRLC_MS = 1000;
+
+    // Handle Ctrl+C from signal (works when NOT in raw mode)
+    const handleSigint = () => {
+      userInterrupted = true;
+      cleanup();
+      try {
+        ws.close();
+      } catch {
+        // Ignore
+      }
+      safeResolve({ type: 'interrupted' });
+    };
+    process.once('SIGINT', handleSigint);
+
+    // Force quit with Ctrl+\ (SIGQUIT) - works even in raw mode
+    const handleSigquit = () => {
+      userInterrupted = true;
+      process.stderr.write('\r\n\x1b[33mForce quit (Ctrl+\\)\x1b[0m\r\n');
+      cleanup();
+      try {
+        ws.close();
+      } catch {
+        // Ignore
+      }
+      safeResolve({ type: 'interrupted' });
+    };
+    process.once('SIGQUIT', handleSigquit);
+
+    // Connection timeout - if we don't connect within 30s, give up
+    const connectionTimeout = setTimeout(() => {
+      if (!connectionOpened && !connectionClosed) {
+        connectionClosed = true;
+        process.stderr.write(`\r\n\x1b[31m✗ Connection timeout: server not responding\x1b[0m\r\n`);
+        try {
+          ws.terminate();
+        } catch {
+          // Ignore
+        }
+        safeResolve({ type: 'disconnected', reason: 'Connection timeout' });
+      }
+    }, 30_000);
+
+    // Client-side connection health monitoring
+    let lastDataReceived = Date.now();
+    const CLIENT_TIMEOUT_MS = WS_READ_TIMEOUT_MS + 15_000; // 75s (server is 60s, give buffer)
+    
+    const healthCheckInterval = setInterval(() => {
+      if (connectionClosed) return;
+      
+      const timeSinceData = Date.now() - lastDataReceived;
+      if (timeSinceData > CLIENT_TIMEOUT_MS) {
+        debugLog(`Client-side timeout: no data for ${timeSinceData}ms`);
+        clearInterval(healthCheckInterval);
+        
+        // Show clear message to user
+        const timeoutSecs = Math.round(timeSinceData / 1000);
+        process.stderr.write(`\r\n\x1b[31m✗ Connection timed out (no data for ${timeoutSecs}s)\x1b[0m\r\n`);
+        
+        // Force close the connection
+        try {
+          ws.terminate();
+        } catch {
+          // Ignore
+        }
+        
+        cleanup();
+        safeResolve({ type: 'disconnected', reason: 'Connection timed out (no data received)' });
+      }
+    }, 5000);
 
     const handleResize = () => {
       const { cols, rows } = terminal.getSize();
@@ -79,15 +172,42 @@ export async function connectToSession(
     };
 
     const cleanup = () => {
+      connectionClosed = true;
+      clearTimeout(connectionTimeout);
+      clearInterval(healthCheckInterval);
       terminal.disableBracketedPaste();
       terminal.restore();
       terminal.offResize(handleResize);
       process.stdin.off('data', handleStdinData);
+      process.off('SIGINT', handleSigint);
+      process.off('SIGQUIT', handleSigquit);
     };
 
     const handleStdinData = (data: Buffer) => {
       if (ws.readyState !== WebSocket.OPEN) {
         return;
+      }
+
+      // Detect Ctrl+C (0x03) for double-tap exit
+      // Check if buffer contains Ctrl+C (could be alone or with other bytes)
+      const ctrlCIndex = data.indexOf(0x03);
+      if (ctrlCIndex !== -1) {
+        const now = Date.now();
+        if (now - lastCtrlC < DOUBLE_CTRLC_MS) {
+          // Double Ctrl+C detected - exit catty immediately
+          userInterrupted = true;
+          process.stderr.write('\r\n');
+          cleanup();
+          try {
+            ws.close();
+          } catch {
+            // Ignore
+          }
+          safeResolve({ type: 'interrupted' });
+          return;
+        }
+        lastCtrlC = now;
+        // First Ctrl+C - just send to remote, no hint (cleaner UX)
       }
 
       try {
@@ -279,6 +399,10 @@ export async function connectToSession(
     };
 
     ws.on('open', () => {
+      // Connection established - clear the timeout
+      connectionOpened = true;
+      clearTimeout(connectionTimeout);
+
       // Enable sync-back if requested
       if (opts.syncBack) {
         ws.send(createSyncBackMessage(true));
@@ -312,6 +436,9 @@ export async function connectToSession(
 
     // Relay WebSocket -> stdout
     ws.on('message', (data: WebSocket.RawData, isBinary: boolean) => {
+      // Update last data received time for health monitoring
+      lastDataReceived = Date.now();
+      
       if (isBinary) {
         process.stdout.write(data as Buffer);
       } else {
@@ -333,7 +460,7 @@ export async function connectToSession(
           process.stderr.write(`\r\nProcess exited with code ${exitMsg.code}\r\n`);
           cleanup();
           ws.close();
-          resolve();
+          safeResolve({ type: 'exit', code: exitMsg.code });
           break;
         }
         case 'error': {
@@ -353,20 +480,40 @@ export async function connectToSession(
       }
     }
 
-    ws.on('close', (code: number) => {
+    ws.on('close', (code: number, reason: Buffer) => {
+      if (connectionClosed) return; // Already handled
+      
       cleanup();
+      
+      // If user pressed Ctrl+C, don't show disconnect message
+      if (userInterrupted) {
+        return; // Already resolved in handleSigint
+      }
+      
       // Code 1008 (WS_POLICY_VIOLATION) = connection replaced by new one
-      // This is a clean termination, not an error
       if (code === WS_POLICY_VIOLATION) {
-        resolve();
+        process.stderr.write('\r\n\x1b[33m⚠ Connection replaced by another client\x1b[0m\r\n');
+        safeResolve({ type: 'replaced' });
       } else {
-        resolve();
+        const reasonStr = reason?.toString() || `code ${code}`;
+        process.stderr.write(`\r\n\x1b[31m✗ Connection lost: ${reasonStr}\x1b[0m\r\n`);
+        safeResolve({ type: 'disconnected', reason: reasonStr });
       }
     });
 
     ws.on('error', (err: Error) => {
+      if (connectionClosed) return; // Already handled
+      
       cleanup();
-      reject(err);
+      
+      // If user pressed Ctrl+C, don't show error message
+      if (userInterrupted) {
+        return; // Already resolved in handleSigint
+      }
+      
+      // Show user-friendly error message
+      process.stderr.write(`\r\n\x1b[31m✗ Connection error: ${err.message}\x1b[0m\r\n`);
+      safeResolve({ type: 'disconnected', reason: err.message });
     });
 
     // Handle process exit
