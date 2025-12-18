@@ -1,0 +1,183 @@
+---
+title: "FAQ"
+description: "Frequently asked questions about Catty"
+---
+
+Answers to common questions about Catty.
+
+## General
+
+<AccordionGroup>
+  <Accordion title="What is Catty?">
+    Catty is a platform that runs Claude Code in persistent cloud sessions. It streams the terminal to your local machine, giving you a native experience while the AI runs remotely.
+
+    Key features:
+    - Sessions persist even when you disconnect
+    - Run multiple sessions in parallel
+    - Automatic workspace upload and sync-back
+    - Reconnect from anywhere
+  </Accordion>
+
+  <Accordion title="How is this different from running Claude Code locally?">
+    | Aspect | Catty | Local Claude Code |
+    |--------|-------|-------------------|
+    | Persistence | Sessions keep running when you disconnect | Stops when terminal closes |
+    | Parallel sessions | Run multiple sessions simultaneously | One session per terminal |
+    | Location | Reconnect from any machine | Tied to one machine |
+    | File sync | Automatic bidirectional | N/A (already local) |
+  </Accordion>
+
+  <Accordion title="Who is Catty for?">
+    Catty is ideal for:
+    - Developers who want sessions that persist across disconnects
+    - Anyone who needs to run multiple Claude Code sessions in parallel
+    - Users who work from different locations
+    - Teams that want automatic file sync between local and remote
+  </Accordion>
+</AccordionGroup>
+
+## Platform Support
+
+<AccordionGroup>
+  <Accordion title="What platforms are supported?">
+    **Supported:**
+    - macOS (Intel and Apple Silicon)
+    - Linux (x64 and ARM64)
+
+    **Not yet supported:**
+    - Windows
+
+    Windows support is on the roadmap.
+  </Accordion>
+
+  <Accordion title="What Node.js version do I need?">
+    Node.js 18 or later is required to install the CLI via npm.
+  </Accordion>
+
+  <Accordion title="Can I use Catty without npm?">
+    Not currently. The CLI is distributed via npm. You can use `npx @diggerhq/catty` without a global install.
+  </Accordion>
+</AccordionGroup>
+
+## Sessions
+
+<AccordionGroup>
+  <Accordion title="Can I run multiple sessions?">
+    Yes! You can run multiple sessions in parallel for different projects or tasks. Use `catty list` to see all your active sessions.
+  </Accordion>
+
+  <Accordion title="How long do sessions last?">
+    Sessions have a TTL (time-to-live) and will auto-stop after extended inactivity. You can also stop them manually with `catty stop`.
+  </Accordion>
+
+  <Accordion title="What happens to my files when a session ends?">
+    The cloud machine is destroyed when a session stops. Any files not synced back to your local machine are lost.
+
+    With sync-back enabled (default), all changes Claude makes are automatically synced to your local directory in real-time, so you won't lose work.
+  </Accordion>
+
+  <Accordion title="Can I keep a session running in the background?">
+    Yes! Sessions persist until stopped. Disconnect with `Ctrl+C` and reconnect later with `catty connect <label>`.
+  </Accordion>
+</AccordionGroup>
+
+## Security & Privacy
+
+<AccordionGroup>
+  <Accordion title="Is my code private?">
+    Yes. Each session runs in its own isolated cloud machine. Your workspace files exist only on that machine and are deleted when the session ends.
+
+    - Sessions are isolated from each other
+    - Only you can access your sessions (via your auth token)
+    - No workspace data is persisted after session termination
+  </Accordion>
+
+  <Accordion title="Where are my credentials stored?">
+    Locally at `~/.catty/credentials.json` with restricted file permissions (0600). Credentials are only sent to the Catty API for authentication.
+  </Accordion>
+
+  <Accordion title="Does Catty see my code?">
+    Your workspace is uploaded to the session machine, which Catty operates. However:
+    - Files are only stored on the ephemeral session machine
+    - Files are deleted when the session ends
+    - Catty doesn't analyze or store your code beyond the session lifetime
+  </Accordion>
+
+  <Accordion title="Are API calls logged?">
+    Catty doesn't log the content of your API calls to Claude.
+  </Accordion>
+</AccordionGroup>
+
+## Billing
+
+<AccordionGroup>
+  <Accordion title="How does billing work?">
+    Catty offers two plans:
+    - **Free tier**: Limited usage per month
+    - **Pro**: $25/month for higher limits
+  </Accordion>
+
+  <Accordion title="Do I need my own Anthropic API key?">
+    No. Catty provides Claude API access. You don't need your own API key.
+  </Accordion>
+
+  <Accordion title="What happens when I hit my quota?">
+    You can't create new sessions. Existing sessions continue working. Options:
+    1. Wait for monthly reset
+    2. Upgrade to Pro
+  </Accordion>
+
+  <Accordion title="Do I pay for the cloud machines?">
+    No. Cloud compute costs are included in your plan. You only pay for token usage.
+  </Accordion>
+</AccordionGroup>
+
+## Technical
+
+<AccordionGroup>
+  <Accordion title="What tools are available in the session?">
+    Sessions run on Debian (node:22-bookworm) with development tools pre-installed:
+    - Node.js 22
+    - Git
+    - Build tools (gcc, make)
+    - ripgrep, jq, vim, curl, wget
+    - Python (with pip)
+    - And more
+
+    Claude Code has access to all standard Unix tools.
+  </Accordion>
+
+  <Accordion title="Can I install additional packages?">
+    Yes, within the session. Use `apt-get`, `npm`, `pip`, etc. However, installations don't persist across sessions.
+  </Accordion>
+
+  <Accordion title="What's the upload size limit?">
+    100 MB. Use `.gitignore` to exclude large files, or use `--no-upload` and clone your repo in the session.
+  </Accordion>
+
+  <Accordion title="How does sync-back handle conflicts?">
+    Sync-back is one-way (remote to local). If you edit a file locally while Claude edits it remotely, the remote version will overwrite your local changes.
+
+    **Best practice**: Don't edit files locally during an active session. Let Claude do the work, then review when done.
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Where can I report bugs?">
+    Open an issue on GitHub: [github.com/diggerhq/catty/issues](https://github.com/diggerhq/catty/issues)
+
+    Include:
+    - CLI version (`catty version`)
+    - OS and architecture
+    - Full error message
+    - Steps to reproduce
+  </Accordion>
+
+  <Accordion title="Where can I get help?">
+    - Check [Common Issues](/common-issues) for solutions
+    - Open a GitHub issue for bugs
+    - Review this FAQ for general questions
+  </Accordion>
+</AccordionGroup>

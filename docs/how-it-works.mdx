@@ -1,0 +1,44 @@
+---
+title: "How It Works"
+description: "Understand the architecture behind Catty"
+---
+
+Catty connects your local terminal to Claude Code running in isolated cloud machines. Here's how all the pieces fit together.
+
+## Components
+
+<AccordionGroup>
+  <Accordion title="catty CLI" icon="terminal">
+    The command-line tool you install via npm. It handles:
+    - User authentication
+    - Creating and managing sessions
+    - Uploading your workspace
+    - WebSocket connection for terminal streaming
+    - Applying remote file changes locally (sync-back)
+  </Accordion>
+
+  <Accordion title="Catty API" icon="server">
+    The hosted API server. It handles:
+    - User authentication and session management
+    - Provisioning cloud machines
+    - Session metadata storage
+  </Accordion>
+
+  <Accordion title="Session Machine" icon="microchip">
+    The runtime environment for each session. It handles:
+    - Receiving workspace uploads
+    - Running Claude Code in a PTY
+    - WebSocket relay for terminal I/O
+    - File watching for sync-back
+  </Accordion>
+</AccordionGroup>
+
+## Session Creation
+
+When you run `catty login`, you authenticate in your browser and credentials are stored locally. Then `catty new` calls the API, which provisions a new cloud machine and returns connection details including a session label like "brave-tiger-1234".
+
+The CLI zips your current directory (respecting `.gitignore`) and uploads it to the session machine. It then establishes a WebSocket connection, and the machine spawns Claude Code in a PTY. Terminal input/output is streamed bidirectionally, so the experience feels like running Claude Code locally.
+
+## File Sync-Back
+
+When Claude modifies files in the remote workspace, the session machine detects the changes and sends them over the WebSocket. The CLI receives each change, validates the path, and applies it to your local directory in real-time.

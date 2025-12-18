@@ -1,0 +1,101 @@
+---
+title: "Sessions"
+description: "Creating, managing, and reconnecting to Claude Code sessions"
+---
+
+A session is an isolated cloud machine running Claude Code. Each session has a memorable label like "brave-tiger-1234" for easy reference.
+
+## Creating Sessions
+
+Start a new session with:
+
+```bash
+catty new
+```
+
+This will:
+1. Create a new cloud machine
+2. Upload your current directory (see [Workspace Sync](/workspace-sync))
+3. Start Claude Code
+4. Connect your terminal
+
+### Options
+
+| Flag | Description |
+|------|-------------|
+| `--no-upload` | Skip uploading current directory |
+| `--no-sync-back` | Disable real-time file sync back to local |
+| `--api <url>` | Override API URL (for development) |
+| `--agent codex` | Use Codex instead of Claude Code (experimental) |
+
+### Examples
+
+```bash
+# Standard session with workspace upload
+catty new
+
+# Session without uploading files
+catty new --no-upload
+
+# Session without sync-back
+catty new --no-sync-back
+```
+
+## Session Labels
+
+Each session gets a memorable label like:
+
+- `brave-tiger-1234`
+- `swift-falcon-5678`
+- `clever-dolphin-9012`
+
+Labels are easier to remember than UUIDs and are used for all session operations.
+
+## Listing Sessions
+
+View all your sessions:
+
+```bash
+catty list
+```
+
+Output shows:
+- Session label
+- Status (running, stopped)
+- Creation time
+
+## Reconnecting
+
+Sessions persist until explicitly stopped. Reconnect to an existing session:
+
+```bash
+catty connect brave-tiger-1234
+```
+
+<Tip>
+  Use Tab completion with the session label for convenience.
+</Tip>
+
+### Reconnect Options
+
+| Flag | Description |
+|------|-------------|
+| `--no-sync-back` | Disable sync-back for this connection |
+
+```bash
+# Reconnect without sync-back
+catty connect brave-tiger-1234 --no-sync-back
+```
+
+## Stopping Sessions
+
+Stop a running session:
+
+```bash
+catty stop brave-tiger-1234
+```
+
+<Warning>
+  Stopping a session destroys the cloud machine. Any files not synced back will be lost.
+</Warning>
+
