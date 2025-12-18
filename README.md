@@ -18,14 +18,14 @@ cd your-project
 catty new
 ```
 
-That's it. Your files sync to the cloud, and any changes Claude makes sync back in real-time.
+That's it. Your files sync to the cloud, and you can download them anytime.
 
 ## Why Catty?
 
 - **Sessions persist** - Start at work, reconnect from home. Sessions keep running until you stop them.
-- **Two-way sync** - Your workspace uploads automatically, changes sync back in real-time.
+- **Cloud persistence** - Workspaces auto-save to the cloud. Download anytime with `catty download`.
+- **Git integration** - Add your GitHub token once, Claude can clone, push, and create PRs.
 - **Native terminal** - Full PTY streaming means colors, vim, and interactive prompts all work.
-- **Multiple sessions** - Run parallel sessions for different projects or tasks.
 
 ## Commands
 
@@ -35,12 +35,16 @@ catty logout                 # Remove stored credentials
 
 catty new                    # Start a new session (uploads current directory)
 catty new --no-upload        # Start without uploading workspace
-catty new --no-sync-back     # Disable sync-back of remote changes
 catty new --enable-prompts   # Enable permission prompts (default: auto-approve)
 
 catty connect <label>        # Reconnect to an existing session
 catty list                   # List your sessions
 catty stop <label>           # Stop a session
+catty download <label>       # Download workspace to local directory
+
+catty secrets add github     # Add GitHub token (interactive)
+catty secrets list           # List configured secrets
+catty secrets remove <name>  # Remove a secret
 
 catty update                 # Update to latest version
 catty version                # Print version
@@ -58,14 +62,20 @@ When you run `catty new`, your current directory is zipped and uploaded. These a
 
 Maximum upload size: 100MB
 
+## Secrets
+
+Store secrets locally (encrypted) and they're automatically available in your sessions:
+
+```bash
+catty secrets add github     # Guided GitHub token setup
+catty secrets set MY_KEY xyz # Set any secret
+```
+
+Secrets are passed as environment variables. With a GitHub token configured, Claude can use `git` and `gh` CLI to clone repos, push commits, and create PRs.
+
 ## File Upload
 
-Drag and drop file paths into your terminal to upload images and documents to the session:
-
-- **Images**: PNG, JPG, GIF, WEBP, BMP, SVG
-- **Documents**: PDF, TXT, MD, JSON, XML, CSV
-
-Files are uploaded to `/workspace/.catty-uploads/` and can be referenced by Claude.
+Drag and drop file paths into your terminal to upload images and documents to the session. Files are uploaded to `/workspace/.catty-uploads/` and can be referenced by Claude.
 
 ## Auto-Reconnect
 
