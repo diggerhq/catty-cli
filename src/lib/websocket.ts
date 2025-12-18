@@ -3,7 +3,6 @@ import { appendFileSync } from 'fs';
 import { homedir } from 'os';
 import { Terminal } from './terminal.js';
 import {
-  SYNC_BACK_ACK_TIMEOUT_MS,
   WS_POLICY_VIOLATION,
   WS_READ_TIMEOUT_MS,
 } from './config.js';
@@ -11,15 +10,12 @@ import {
   parseMessage,
   createResizeMessage,
   createPongMessage,
-  createSyncBackMessage,
   createFileUploadMessage,
   createFileUploadChunkMessage,
   type Message,
   type ExitMessage,
   type ErrorMessage,
-  type FileChangeMessage,
 } from '../protocol/messages.js';
-import { applyRemoteFileChange } from './syncback.js';
 import {
   detectFilePaths,
   shouldAutoUpload,
@@ -50,7 +46,6 @@ export interface WebSocketConnectOptions {
   connectURL: string;
   connectToken: string;
   headers: Record<string, string>;
-  syncBack: boolean;
   onExit?: (code: number) => void;
 }
 
@@ -72,7 +67,6 @@ export async function connectToSession(
   });
 
   return new Promise((resolve, reject) => {
-    let syncBackAcked = false;
     let exitCode = 0;
     let connectionClosed = false;
     let connectionOpened = false;
@@ -403,20 +397,6 @@ export async function connectToSession(
       connectionOpened = true;
       clearTimeout(connectionTimeout);
 
-      // Enable sync-back if requested
-      if (opts.syncBack) {
-        ws.send(createSyncBackMessage(true));
-
-        // Warn if no ack after timeout
-        setTimeout(() => {
-          if (!syncBackAcked) {
-            process.stderr.write(
-              '\r\n(sync-back) No ack from executor yet — this machine may be running an older catty-exec image without sync-back.\r\n'
-            );
-          }
-        }, SYNC_BACK_ACK_TIMEOUT_MS);
-      }
-
       // Enter raw mode
       terminal.makeRaw();
 
@@ -470,12 +450,6 @@ export async function connectToSession(
         }
         case 'ping':
           ws.send(createPongMessage());
-          break;
-        case 'file_change':
-          applyRemoteFileChange(msg as FileChangeMessage);
-          break;
-        case 'sync_back_ack':
-          syncBackAcked = true;
           break;
       }
     }
