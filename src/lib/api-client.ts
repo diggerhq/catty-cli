@@ -163,9 +163,9 @@ export class APIClient {
 
   async stopSession(idOrLabel: string, del?: boolean): Promise<void> {
     const path = del
-      ? `/v1/sessions/${idOrLabel}?delete=true`
-      : `/v1/sessions/${idOrLabel}`;
-    const response = await this.doRequestWithRefresh('DELETE', path);
+      ? `/v1/sessions/${idOrLabel}/stop?delete=true`
+      : `/v1/sessions/${idOrLabel}/stop`;
+    const response = await this.doRequestWithRefresh('POST', path);
 
     if (!response.ok) {
       let errorData: APIErrorResponse;

@@ -57,4 +57,22 @@ export class Terminal {
   offResize(callback: () => void): void {
     process.stdout.off('resize', callback);
   }
+
+  /**
+   * Enable bracketed paste mode.
+   * When enabled, pasted text is wrapped in escape sequences:
+   * - Start: \x1b[200~
+   * - End: \x1b[201~
+   * This allows detecting drag-and-drop file paths.
+   */
+  enableBracketedPaste(): void {
+    process.stdout.write('\x1b[?2004h');
+  }
+
+  /**
+   * Disable bracketed paste mode.
+   */
+  disableBracketedPaste(): void {
+    process.stdout.write('\x1b[?2004l');
+  }
 }

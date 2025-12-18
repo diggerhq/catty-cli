@@ -9,6 +9,8 @@ export const MessageType = {
   SYNC_BACK: 'sync_back',
   SYNC_BACK_ACK: 'sync_back_ack',
   FILE_CHANGE: 'file_change',
+  FILE_UPLOAD: 'file_upload',
+  FILE_UPLOAD_CHUNK: 'file_upload_chunk',
 } as const;
 
 export interface BaseMessage {
@@ -69,6 +71,25 @@ export interface FileChangeMessage {
   mode?: number;
 }
 
+export interface FileUploadMessage {
+  type: 'file_upload';
+  filename: string;
+  remote_path: string;
+  content: string; // base64 encoded
+  mime_type: string;
+}
+
+export interface FileUploadChunkMessage {
+  type: 'file_upload_chunk';
+  upload_id: string;
+  filename: string;
+  remote_path: string;
+  chunk_index: number;
+  total_chunks: number;
+  content: string; // base64 encoded chunk
+  mime_type: string;
+}
+
 export type Message =
   | ResizeMessage
   | SignalMessage
@@ -80,6 +101,8 @@ export type Message =
   | SyncBackMessage
   | SyncBackAckMessage
   | FileChangeMessage
+  | FileUploadMessage
+  | FileUploadChunkMessage
   | BaseMessage;
 
 export function parseMessage(data: string): Message {
@@ -106,6 +129,8 @@ export function parseMessage(data: string): Message {
       return JSON.parse(data) as SyncBackAckMessage;
     case MessageType.FILE_CHANGE:
       return JSON.parse(data) as FileChangeMessage;
+    case MessageType.FILE_UPLOAD:
+      return JSON.parse(data) as FileUploadMessage;
     default:
       return base;
   }
@@ -129,4 +154,40 @@ export function createPongMessage(): string {
 
 export function createSyncBackMessage(enabled: boolean): string {
   return JSON.stringify({ type: MessageType.SYNC_BACK, enabled });
+}
+
+export function createFileUploadMessage(
+  filename: string,
+  remotePath: string,
+  content: Buffer,
+  mimeType: string
+): string {
+  return JSON.stringify({
+    type: MessageType.FILE_UPLOAD,
+    filename,
+    remote_path: remotePath,
+    content: content.toString('base64'),
+    mime_type: mimeType,
+  });
+}
+
+export function createFileUploadChunkMessage(
+  uploadId: string,
+  filename: string,
+  remotePath: string,
+  chunkIndex: number,
+  totalChunks: number,
+  content: string, // already base64 encoded
+  mimeType: string
+): string {
+  return JSON.stringify({
+    type: MessageType.FILE_UPLOAD_CHUNK,
+    upload_id: uploadId,
+    filename,
+    remote_path: remotePath,
+    chunk_index: chunkIndex,
+    total_chunks: totalChunks,
+    content,
+    mime_type: mimeType,
+  });
 }
