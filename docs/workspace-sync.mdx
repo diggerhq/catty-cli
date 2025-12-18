@@ -1,0 +1,192 @@
+---
+title: "Workspace Sync"
+description: "How files are synchronized between your local machine and the cloud session"
+---
+
+Catty provides bidirectional file synchronization between your local directory and the remote session.
+
+## Upload (Local to Remote)
+
+When you run `catty new`, your current directory is automatically zipped and uploaded to the remote session.
+
+### What Gets Uploaded
+
+Your entire current directory, **except**:
+
+- Files matching patterns in `.gitignore`
+- Default exclusions (see below)
+
+### Default Exclusions
+
+These patterns are always excluded, regardless of `.gitignore`:
+
+```
+.git/
+.git/**
+node_modules/
+node_modules/**
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.DS_Store
+*.log
+```
+
+<Tip>
+  Add patterns to your `.gitignore` to exclude additional files from upload.
+</Tip>
+
+### Upload Limits
+
+| Limit | Value |
+|-------|-------|
+| Maximum size | 100 MB |
+| Uploads per session | 1 |
+
+<Warning>
+  If your workspace exceeds 100 MB, reduce its size by adding exclusions to `.gitignore` or use `--no-upload` and manually copy files.
+</Warning>
+
+### Skipping Upload
+
+Start a session without uploading:
+
+```bash
+catty new --no-upload
+```
+
+Useful when:
+- Your workspace is too large
+- You want an empty session
+- You'll clone a repo in the session instead
+
+## Sync-Back (Remote to Local)
+
+Changes made by Claude in the remote `/workspace` directory are automatically synced back to your local directory in real-time.
+
+### How It Works
+
+```mermaid
+sequenceDiagram
+    participant Claude as Claude Code
+    participant Exec as Executor
+    participant WS as WebSocket
+    participant CLI as Local CLI
+    participant FS as Local Files
+
+    Claude->>Exec: Writes file
+    Exec->>Exec: fsnotify detects change
+    Exec->>WS: FileChange message (base64)
+    WS->>CLI: Receives message
+    CLI->>CLI: Validates path
+    CLI->>FS: Writes file locally
+```
+
+### Supported Operations
+
+| Operation | Description |
+|-----------|-------------|
+| Create | New files appear locally |
+| Modify | Changed files are updated |
+| Delete | Deleted files are removed locally |
+
+### Security
+
+Sync-back includes safety measures:
+
+<CardGroup cols={2}>
+  <Card title="Path Validation" icon="shield-check">
+    Rejects absolute paths and directory traversal (`../`) attempts.
+  </Card>
+
+  <Card title="Workspace Scoped" icon="folder">
+    Only changes under `/workspace` are synced.
+  </Card>
+
+  <Card title="Local Boundary" icon="house">
+    Writes are confined to your current working directory.
+  </Card>
+
+  <Card title="Real-time" icon="bolt">
+    Changes appear immediately as Claude makes them.
+  </Card>
+</CardGroup>
+
+### Disabling Sync-Back
+
+Disable for new sessions:
+
+```bash
+catty new --no-sync-back
+```
+
+Disable when reconnecting:
+
+```bash
+catty connect brave-tiger-1234 --no-sync-back
+```
+
+<Note>
+  Disabling sync-back means you'll need to manually retrieve any files Claude creates or modifies.
+</Note>
+
+## Protocol Details
+
+Sync-back uses WebSocket text frames with JSON messages:
+
+### File Change Message (Server to Client)
+
+```json
+{
+  "type": "file_change",
+  "path": "src/main.go",
+  "action": "write",
+  "content": "cGFja2FnZSBtYWluLi4u"
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `type` | Always `"file_change"` |
+| `path` | Relative path from workspace root |
+| `action` | `"write"` or `"delete"` |
+| `content` | Base64-encoded file content (for writes) |
+
+### Enable Sync-Back Message (Client to Server)
+
+```json
+{
+  "type": "sync_back",
+  "enabled": true
+}
+```
+
+### Acknowledgment (Server to Client)
+
+```json
+{
+  "type": "sync_back_ack"
+}
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Keep workspace under 100 MB">
+    Use `.gitignore` to exclude large files, build artifacts, and dependencies. These can be regenerated in the remote session.
+  </Accordion>
+
+  <Accordion title="Leave sync-back enabled">
+    The default behavior ensures your local copy stays in sync with Claude's changes. Only disable if you have a specific reason.
+  </Accordion>
+
+  <Accordion title="Check .gitignore before upload">
+    Make sure your `.gitignore` excludes sensitive files like `.env` with secrets. These are excluded by default, but verify your specific setup.
+  </Accordion>
+
+  <Accordion title="Use version control">
+    Since files sync in real-time, use Git to track changes and revert if needed. Commit your work before starting a session.
+  </Accordion>
+</AccordionGroup>

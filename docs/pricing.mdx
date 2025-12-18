@@ -1,0 +1,72 @@
+---
+title: "Pricing"
+description: "Catty pricing plans"
+---
+
+Catty offers a free tier for getting started and a Pro plan for heavier usage.
+
+## Plans
+
+<CardGroup cols={2}>
+  <Card title="Free" icon="gift">
+    **$0/month**
+
+    - Limited usage per month
+    - Full Claude Code functionality
+    - Workspace sync
+    - Session reconnect
+
+    Perfect for trying Catty or light usage.
+  </Card>
+
+  <Card title="Pro" icon="star">
+    **$25/month**
+
+    - Higher usage limits
+    - Priority support
+    - All Free features
+
+    For developers who use Claude Code daily.
+  </Card>
+</CardGroup>
+
+## Upgrading to Pro
+
+When you hit your quota, Catty prompts you to upgrade:
+
+```bash
+$ catty new
+Error: Monthly quota exceeded.
+
+To continue using Catty, upgrade to Pro ($25/month).
+Opening checkout in your browser...
+```
+
+The CLI automatically opens checkout in your browser. After completing payment:
+
+1. Your account is upgraded to Pro
+2. Run `catty new` again to start a session
+
+<Tip>
+  Quota resets monthly. If you're close to the limit near month-end, you can wait for the reset instead of upgrading.
+</Tip>
+
+## FAQ
+
+<AccordionGroup>
+  <Accordion title="What happens if I exceed my quota?">
+    You can't create new sessions until your quota resets (monthly) or you upgrade to Pro. Existing sessions continue working.
+  </Accordion>
+
+  <Accordion title="Do session machines cost extra?">
+    No. Session machines (cloud compute) are included in both plans.
+  </Accordion>
+
+  <Accordion title="Is there an annual plan?">
+    Not currently. We only offer monthly billing.
+  </Accordion>
+
+  <Accordion title="Can I get a refund?">
+    Contact support for refund requests. We handle these on a case-by-case basis.
+  </Accordion>
+</AccordionGroup>

@@ -1,0 +1,221 @@
+---
+title: "Common Issues"
+description: "Solutions to frequently encountered problems"
+---
+
+Solutions to problems you might encounter when using Catty.
+
+## Authentication Issues
+
+<AccordionGroup>
+  <Accordion title="Not logged in error">
+    **Error:** `Not logged in. Run 'catty login' to authenticate.`
+
+    **Solution:** Run `catty login` to authenticate. If you've already logged in, your credentials may have expired.
+
+    ```bash
+    catty login
+    ```
+  </Accordion>
+
+  <Accordion title="Missing authorization header">
+    **Error:** `missing authorization header`
+
+    **Causes:**
+    - CLI isn't sending the auth token
+    - Outdated CLI version (npm may have cached an old binary)
+
+    **Solutions:**
+    1. Verify you're logged in: `cat ~/.catty/credentials.json`
+    2. Re-login: `catty login`
+    3. Update the CLI: `npm update -g @diggerhq/catty`
+  </Accordion>
+
+  <Accordion title="502 errors after API update">
+    **Error:** 502 Bad Gateway errors when creating sessions
+
+    **Cause:** API redeployment may invalidate some tokens
+
+    **Solution:** Re-authenticate:
+    ```bash
+    catty logout
+    catty login
+    ```
+  </Accordion>
+
+  <Accordion title="Login fails with authentication error">
+    **Error:** Authentication fails
+
+    **Cause:** Server-side configuration issue
+
+    **Solution:** This is likely a temporary service issue. Try again in a few minutes. If it persists, report the issue.
+  </Accordion>
+</AccordionGroup>
+
+## Connection Issues
+
+<AccordionGroup>
+  <Accordion title="Connection drops after ~60 seconds">
+    **Symptom:** Terminal disconnects after being idle
+
+    **Expected behavior:** Catty sends keepalive pings every 25 seconds to prevent this
+
+    **Solutions:**
+    1. Reconnect with `catty connect <label>`
+    2. Check your network connection
+    3. If persistent, report the issue with your network setup details
+  </Accordion>
+
+  <Accordion title="WebSocket connection failed">
+    **Error:** Unable to establish WebSocket connection
+
+    **Causes:**
+    - Network firewall blocking WebSocket
+    - Proxy server interfering
+    - Session machine not ready
+
+    **Solutions:**
+    1. Wait a few seconds and try again
+    2. Check if your network allows WebSocket connections
+    3. Try from a different network
+  </Accordion>
+
+  <Accordion title="Session not found">
+    **Error:** Session with label `xyz` not found
+
+    **Causes:**
+    - Session was stopped
+    - Session TTL expired
+    - Typo in label
+
+    **Solutions:**
+    1. Run `catty list` to see available sessions
+    2. Create a new session with `catty new`
+  </Accordion>
+</AccordionGroup>
+
+## Workspace Issues
+
+<AccordionGroup>
+  <Accordion title="Workspace files not appearing">
+    **Symptom:** Claude doesn't see your uploaded files
+
+    **Causes:**
+    - Upload failed silently
+    - Files excluded by `.gitignore`
+    - Upload size exceeded
+
+    **Solutions:**
+    1. Check CLI output for "Workspace uploaded" confirmation
+    2. Review your `.gitignore` - files matching patterns aren't uploaded
+    3. Ensure workspace is under 100 MB
+    4. Try `catty new` again
+  </Accordion>
+
+  <Accordion title="Upload too large">
+    **Error:** Workspace exceeds 100 MB limit
+
+    **Solutions:**
+    1. Add large files/directories to `.gitignore`:
+       ```
+       # .gitignore
+       dist/
+       build/
+       *.zip
+       large-data/
+       ```
+    2. Use `--no-upload` and clone your repo in the session:
+       ```bash
+       catty new --no-upload
+       # Then in Claude: git clone https://github.com/...
+       ```
+  </Accordion>
+
+  <Accordion title="Sync-back not working">
+    **Symptom:** Changes Claude makes don't appear locally
+
+    **Causes:**
+    - `--no-sync-back` flag was used
+    - WebSocket disconnected
+    - File outside `/workspace`
+
+    **Solutions:**
+    1. Reconnect without `--no-sync-back`: `catty connect <label>`
+    2. Ensure Claude is editing files in `/workspace`
+    3. Check that you're in the correct local directory
+  </Accordion>
+
+  <Accordion title="Files syncing to wrong location">
+    **Symptom:** Synced files appear in unexpected places
+
+    **Cause:** You're in a different directory than when you created the session
+
+    **Solution:** Navigate to the original directory before reconnecting:
+    ```bash
+    cd /path/to/original/directory
+    catty connect <label>
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Claude Code Issues
+
+<AccordionGroup>
+  <Accordion title="Claude shows login prompt">
+    **Symptom:** Claude Code asks you to log in
+
+    **Expected behavior:** This should be pre-configured and shouldn't happen
+
+    **Solution:** This is a bug. Report it with the exact prompt you see.
+  </Accordion>
+
+  <Accordion title="Claude shows API key prompt">
+    **Symptom:** Claude asks to approve API key
+
+    **Expected behavior:** The API key should be pre-approved
+
+    **Solution:** This is a bug. The wrapper script should handle this. Report the issue.
+  </Accordion>
+
+  <Accordion title="Claude can't find tools (ls, grep, etc.)">
+    **Symptom:** Claude reports missing tools
+
+    **Cause:** Possibly using an outdated executor image
+
+    **Solution:** This is a server-side issue. The executor should have all tools pre-installed. Report the issue.
+  </Accordion>
+</AccordionGroup>
+
+## Billing Issues
+
+<AccordionGroup>
+  <Accordion title="Quota exceeded error">
+    **Error:** `Monthly token quota exceeded`
+
+    **Solutions:**
+    1. Upgrade to Pro when prompted
+    2. Wait for monthly quota reset
+    3. Check when your quota resets (beginning of billing cycle)
+  </Accordion>
+
+  <Accordion title="Checkout page doesn't load">
+    **Symptom:** Browser opens but Stripe checkout fails
+
+    **Solutions:**
+    1. Try a different browser
+    2. Disable browser extensions that might block Stripe
+    3. Check your network connection
+  </Accordion>
+
+  <Accordion title="Payment succeeded but still hitting quota">
+    **Symptom:** Paid for Pro but quota error persists
+
+    **Cause:** Webhook may be delayed
+
+    **Solutions:**
+    1. Wait a few minutes for webhook processing
+    2. Try `catty new` again
+    3. If persistent, contact support with your payment confirmation
+  </Accordion>
+</AccordionGroup>
+

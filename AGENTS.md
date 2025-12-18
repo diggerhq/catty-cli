@@ -31,6 +31,9 @@ catty-cli/
 │   │   └── messages.ts       # WebSocket message types
 │   └── types/
 │       └── index.ts          # TypeScript interfaces
+├── docs/                     # Mintlify docs (docs.catty.dev)
+│   ├── mint.json             # Mintlify config
+│   └── *.mdx                 # Documentation pages
 ├── package.json
 ├── tsconfig.json
 └── tsup.config.ts            # Build config

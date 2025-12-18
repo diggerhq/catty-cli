@@ -1,0 +1,79 @@
+---
+title: "Quickstart"
+description: "Get up and running with Catty in under 2 minutes"
+---
+
+Get started with Catty in three simple steps.
+
+## Prerequisites
+
+- Node.js 18 or later
+- npm or npx
+
+## Getting Started
+
+<Steps>
+  <Step title="Install">
+    Install the CLI globally via npm:
+    ```bash
+    npm install -g @diggerhq/catty
+    ```
+    Or use npx without installing:
+    ```bash
+    npx @diggerhq/catty new
+    ```
+  </Step>
+
+  <Step title="Login">
+    Authenticate with Catty (one-time setup):
+    ```bash
+    catty login
+    ```
+    This opens your browser for authentication. Once complete, your credentials are stored locally.
+  </Step>
+
+  <Step title="Start a Session">
+    Navigate to your project directory and start a new session:
+    ```bash
+    cd my-project
+    catty new
+    ```
+    This creates a cloud machine, uploads your directory, and connects you to Claude Code.
+  </Step>
+</Steps>
+
+You're now connected to Claude Code running in the cloud. Work with it just like you would locally - all changes are synced back to your local directory in real-time.
+
+## Reconnecting to Sessions
+
+Sessions persist until stopped. Reconnect using the session label:
+
+```bash
+catty connect brave-tiger-1234
+```
+
+List your sessions:
+
+```bash
+catty list
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Sessions" icon="layer-group" href="/sessions">
+    Learn about managing sessions
+  </Card>
+
+  <Card title="Workspace Sync" icon="arrows-rotate" href="/workspace-sync">
+    Understand file synchronization
+  </Card>
+
+  <Card title="Commands" icon="terminal" href="/commands">
+    Full CLI reference
+  </Card>
+
+  <Card title="FAQ" icon="circle-question" href="/faq">
+    Common questions answered
+  </Card>
+</CardGroup>
