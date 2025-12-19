@@ -69,7 +69,12 @@ export const downloadCommand = new Command('download')
 
       const response = await fetch(downloadInfo.download_url);
       if (!response.ok || !response.body) {
-        console.error(`✗ Download failed: ${response.statusText}`);
+        if (response.status === 404) {
+          console.error(`✗ No workspace snapshot found for ${label}`);
+          console.error('  The session may not have saved yet or was just created.');
+        } else {
+          console.error(`✗ Download failed: ${response.statusText}`);
+        }
         process.exit(1);
       }
 
@@ -94,7 +99,12 @@ export const downloadCommand = new Command('download')
       const tempPath = `/tmp/catty-download-${Date.now()}.tar.gz`;
       const response = await fetch(downloadInfo.download_url);
       if (!response.ok || !response.body) {
-        console.error(`✗ Download failed: ${response.statusText}`);
+        if (response.status === 404) {
+          console.error(`✗ No workspace snapshot found for ${label}`);
+          console.error('  The session may not have saved yet (saves every 30s) or was just created.');
+        } else {
+          console.error(`✗ Download failed: ${response.statusText}`);
+        }
         process.exit(1);
       }
 
