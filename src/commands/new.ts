@@ -5,6 +5,7 @@ import { isLoggedIn } from '../lib/auth.js';
 import { APIClient, APIError } from '../lib/api-client.js';
 import { connectToSession, type ConnectionResult } from '../lib/websocket.js';
 import { uploadWorkspace, buildUploadURL } from '../lib/workspace.js';
+import { getAllSecrets, listSecretNames } from '../lib/secrets.js';
 
 const MAX_RECONNECT_ATTEMPTS = 5;
 const RECONNECT_DELAY_MS = 2000;
@@ -13,8 +14,9 @@ export const newCommand = new Command('new')
   .description('Start a new remote agent session')
   .option('--agent <name>', 'Agent to use: claude or codex', 'claude')
   .option('--no-upload', "Don't upload current directory")
-  .option('--no-sync-back', 'Disable sync-back')
   .option('--no-auto-reconnect', 'Disable automatic reconnection on disconnect')
+  .option('--no-secrets', "Don't pass stored secrets to session")
+  .option('--no-sync-back', "Don't sync remote file changes back to local")
   .option(
     '--enable-prompts',
     'Enable permission prompts (by default, all permissions are auto-approved)',
@@ -56,6 +58,16 @@ export const newCommand = new Command('new')
         process.exit(1);
     }
 
+    // Gather secrets to pass to session
+    let secrets: Record<string, string> | undefined;
+    if (opts.secrets !== false) {
+      secrets = getAllSecrets();
+      const secretNames = listSecretNames();
+      if (secretNames.length > 0) {
+        console.log(`Secrets: ${secretNames.join(', ')}`);
+      }
+    }
+
     let session;
     try {
       session = await client.createSession({
@@ -63,6 +75,7 @@ export const newCommand = new Command('new')
         cmd: cmdArgs,
         region: 'iad',
         ttl_sec: 7200,
+        secrets,
       });
     } catch (err) {
       if (err instanceof APIError && err.isQuotaExceeded()) {
@@ -74,6 +87,9 @@ export const newCommand = new Command('new')
 
     console.log(`Session created: ${session.label}`);
     console.log(`  Reconnect with: catty connect ${session.label}`);
+    if (opts.syncBack) {
+      console.log(`  Sync-back: enabled (remote changes will sync to local)`);
+    }
 
     // Upload workspace
     if (opts.upload !== false) {

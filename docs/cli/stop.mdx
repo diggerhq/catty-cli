@@ -1,0 +1,52 @@
+---
+title: "catty stop"
+description: "Stop a running session"
+---
+
+Stops a session and releases its cloud resources.
+
+## Synopsis
+
+```bash
+catty stop <label> [options]
+```
+
+## Arguments
+
+| Argument | Description |
+|----------|-------------|
+| `label` | Session label (e.g., `brave-tiger-1234`) |
+
+## Options
+
+| Option | Description |
+|--------|-------------|
+| `--delete` | Also delete the machine after stopping |
+
+## Examples
+
+```bash
+# Stop a session
+catty stop brave-tiger-1234
+
+# Stop and delete
+catty stop brave-tiger-1234 --delete
+```
+
+## What Happens
+
+1. Session receives stop signal
+2. Final workspace snapshot is saved to cloud
+3. Cloud machine is terminated
+
+## Data Preservation
+
+<Note>
+  Workspaces are automatically saved to the cloud every 30 seconds. After stopping a session, you can still download your files with `catty download <label>`.
+</Note>
+
+## See Also
+
+- [catty download](/cli/download) - Download workspace after stopping
+- [catty list](/cli/list) - List sessions
+- [catty new](/cli/new) - Start a new session

@@ -11,6 +11,7 @@ export interface CreateSessionRequest {
   cmd: string[];
   region: string;
   ttl_sec: number;
+  secrets?: Record<string, string>;
 }
 
 export interface CreateSessionResponse {
@@ -86,4 +87,10 @@ export interface APIErrorResponse {
   error: string;
   code?: string;
   upgrade_url?: string;
+}
+
+export interface DownloadResponse {
+  download_url: string;
+  expires_in: number;
+  size_bytes?: number;
 }

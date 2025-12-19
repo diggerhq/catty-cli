@@ -1,0 +1,91 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "Catty",
+  "logo": "/logo.png",
+  "favicon": "/favicon.svg",
+  "colors": {
+    "primary": "#7C3AED",
+    "light": "#A78BFA",
+    "dark": "#5B21B6",
+    "anchors": {
+      "from": "#7C3AED",
+      "to": "#A78BFA"
+    }
+  },
+  "topbarLinks": [
+    {
+      "name": "GitHub",
+      "url": "https://github.com/diggerhq/catty-cli"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Get Started",
+    "url": "/quickstart"
+  },
+  "anchors": [
+    {
+      "name": "Pricing",
+      "icon": "credit-card",
+      "url": "/pricing"
+    },
+    {
+      "name": "npm",
+      "icon": "npm",
+      "url": "https://www.npmjs.com/package/@diggerhq/catty"
+    },
+    {
+      "name": "GitHub",
+      "icon": "github",
+      "url": "https://github.com/diggerhq/catty-cli"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Getting Started",
+      "pages": [
+        "introduction",
+        "quickstart",
+        "how-it-works",
+        "pricing"
+      ]
+    },
+    {
+      "group": "Concepts",
+      "pages": [
+        "concepts/sessions",
+        "concepts/workspaces",
+        "concepts/sync-back",
+        "concepts/secrets",
+        "concepts/github",
+        "concepts/file-uploads"
+      ]
+    },
+    {
+      "group": "CLI Reference",
+      "pages": [
+        "cli/overview",
+        "cli/new",
+        "cli/connect",
+        "cli/list",
+        "cli/stop",
+        "cli/download",
+        "cli/sync",
+        "cli/secrets",
+        "cli/login",
+        "cli/logout",
+        "cli/update",
+        "cli/version"
+      ]
+    },
+    {
+      "group": "Support",
+      "pages": [
+        "troubleshooting",
+        "faq"
+      ]
+    }
+  ],
+  "footerSocials": {
+    "github": "https://github.com/diggerhq/catty"
+  }
+}

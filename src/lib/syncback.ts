@@ -1,52 +1,72 @@
-import { writeFileSync, unlinkSync, mkdirSync, renameSync } from 'fs';
-import { join, dirname, normalize, isAbsolute, sep } from 'path';
+import { mkdirSync, writeFileSync, unlinkSync, existsSync, chmodSync } from 'fs';
+import { dirname, join } from 'path';
+import { homedir } from 'os';
+import { appendFileSync } from 'fs';
 import type { FileChangeMessage } from '../protocol/messages.js';
+
+// Debug logging to file (avoids terminal corruption)
+function debugLog(msg: string): void {
+  if (process.env.CATTY_DEBUG === '1') {
+    const logFile = `${homedir()}/.catty-debug.log`;
+    appendFileSync(logFile, `${new Date().toISOString()} [syncback] ${msg}\n`);
+  }
+}
 
 /**
  * Apply a remote file change to the local filesystem.
- * Best-effort: errors are logged but don't break the terminal.
+ * Called when the executor sends a file_change message.
  */
 export function applyRemoteFileChange(msg: FileChangeMessage): void {
-  // Validate path (no absolute, no traversal)
-  const rel = normalize(msg.path.replace(/^\.\//, ''));
-
-  if (!rel || rel === '.') return;
-
-  if (isAbsolute(rel)) {
-    console.error(`sync-back rejected absolute path: ${rel}`);
-    return;
-  }
-
-  if (rel === '..' || rel.startsWith('..' + sep)) {
-    console.error(`sync-back rejected traversal path: ${rel}`);
-    return;
-  }
-
-  const cwd = process.cwd();
-  const destPath = join(cwd, rel);
-
-  // Ensure destPath is within cwd (resolve any remaining symlinks/tricks)
-  const resolvedCwd = normalize(cwd);
-  const resolvedDest = normalize(destPath);
-
-  if (!resolvedDest.startsWith(resolvedCwd + sep) && resolvedDest !== resolvedCwd) {
-    console.error(`sync-back rejected path outside base: ${destPath}`);
-    return;
-  }
-
   try {
-    if (msg.action === 'delete') {
-      unlinkSync(destPath);
-    } else if (msg.action === 'write') {
-      const content = Buffer.from(msg.content || '', 'base64');
-      mkdirSync(dirname(destPath), { recursive: true });
-
-      // Atomic write via temp file
-      const tmpPath = join(dirname(destPath), `.catty-sync-${Date.now()}`);
-      writeFileSync(tmpPath, content, { mode: msg.mode || 0o644 });
-      renameSync(tmpPath, destPath);
+    // Get the local path - remove /workspace prefix and use cwd
+    const relativePath = msg.path.replace(/^\/workspace\/?/, '');
+    if (!relativePath) {
+      debugLog('ignoring change to workspace root');
+      return;
     }
-  } catch {
-    // Best-effort, don't break terminal
+
+    const localPath = join(process.cwd(), relativePath);
+
+    // Security check: ensure we're not writing outside cwd
+    const cwd = process.cwd();
+    const resolved = join(cwd, relativePath);
+    if (!resolved.startsWith(cwd)) {
+      debugLog(`SECURITY: attempted write outside cwd: ${resolved}`);
+      return;
+    }
+
+    if (msg.action === 'delete') {
+      if (existsSync(localPath)) {
+        unlinkSync(localPath);
+        debugLog(`deleted: ${relativePath}`);
+      }
+    } else if (msg.action === 'write') {
+      if (!msg.content) {
+        debugLog(`write without content: ${relativePath}`);
+        return;
+      }
+
+      // Ensure directory exists
+      const dir = dirname(localPath);
+      mkdirSync(dir, { recursive: true });
+
+      // Decode base64 content and write
+      const content = Buffer.from(msg.content, 'base64');
+      writeFileSync(localPath, content);
+
+      // Apply mode if provided
+      if (msg.mode !== undefined) {
+        try {
+          chmodSync(localPath, msg.mode);
+        } catch {
+          // Ignore chmod errors (may not be supported on all platforms)
+        }
+      }
+
+      debugLog(`wrote: ${relativePath} (${content.length} bytes)`);
+    }
+  } catch (err) {
+    debugLog(`ERROR applying change: ${err}`);
   }
 }
+

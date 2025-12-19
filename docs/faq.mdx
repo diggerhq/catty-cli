@@ -1,0 +1,196 @@
+---
+title: "FAQ"
+description: "Frequently asked questions about Catty"
+---
+
+Answers to common questions about Catty.
+
+## General
+
+<AccordionGroup>
+  <Accordion title="What is Catty?">
+    Catty is a platform that runs Claude Code in persistent cloud sessions. It streams the terminal to your local machine, giving you a native experience while the AI runs remotely.
+
+    Key features:
+    - Sessions persist even when you disconnect
+    - Workspaces auto-save to the cloud every 30 seconds
+    - GitHub integration for private repos
+    - Reconnect from anywhere
+  </Accordion>
+
+  <Accordion title="How is this different from running Claude Code locally?">
+    | Aspect | Catty | Local Claude Code |
+    |--------|-------|-------------------|
+    | Persistence | Sessions keep running when you disconnect | Stops when terminal closes |
+    | Cloud backup | Workspace saved every 30s, downloadable anytime | N/A |
+    | GitHub access | Claude can clone, push, create PRs | Depends on local setup |
+    | Location | Reconnect from any machine | Tied to one machine |
+  </Accordion>
+
+  <Accordion title="Who is Catty for?">
+    Catty is ideal for:
+    - Developers who want sessions that persist across disconnects
+    - Users who need cloud backup of their work
+    - Anyone working with private GitHub repositories
+    - Teams that work from different locations
+  </Accordion>
+</AccordionGroup>
+
+## Platform Support
+
+<AccordionGroup>
+  <Accordion title="What platforms are supported?">
+    **Supported:**
+    - macOS (Intel and Apple Silicon)
+    - Linux (x64 and ARM64)
+
+    **Not yet supported:**
+    - Windows
+
+    Windows support is on the roadmap.
+  </Accordion>
+
+  <Accordion title="What Node.js version do I need?">
+    Node.js 18 or later is required to install the CLI via npm.
+  </Accordion>
+
+  <Accordion title="Can I use Catty without npm?">
+    Not currently. The CLI is distributed via npm. You can use `npx @diggerhq/catty` without a global install.
+  </Accordion>
+</AccordionGroup>
+
+## Sessions
+
+<AccordionGroup>
+  <Accordion title="How long do sessions last?">
+    Sessions have a TTL (time-to-live) of 2 hours of inactivity. They can also be stopped manually with `catty stop`.
+  </Accordion>
+
+  <Accordion title="What happens to my files when a session ends?">
+    Workspaces are automatically saved to the cloud every 30 seconds. When a session stops:
+
+    1. A final save is performed
+    2. The cloud machine is terminated
+    3. Your files remain in cloud storage
+    4. Use `catty download <label>` to retrieve them anytime
+  </Accordion>
+
+  <Accordion title="Can I run multiple sessions?">
+    Yes! Run multiple sessions in parallel for different projects. Use `catty list` to see all active sessions.
+  </Accordion>
+</AccordionGroup>
+
+## Files & Workspaces
+
+<AccordionGroup>
+  <Accordion title="What's the upload size limit?">
+    100 MB. Use `.gitignore` to exclude large files, or use `--no-upload` and clone your repo in the session.
+  </Accordion>
+
+  <Accordion title="How does cloud persistence work?">
+    Workspaces save automatically:
+    - First save: ~10 seconds after session start
+    - Periodic saves: Every 30 seconds
+    - Final save: When session stops
+
+    Download anytime with `catty download <label>`.
+  </Accordion>
+
+  <Accordion title="What's the difference between sync-back and download?">
+    | Feature | Sync-back | Download |
+    |---------|-----------|----------|
+    | Timing | Real-time during session | On-demand |
+    | Requires connection | Yes | No |
+    | Use case | Live collaboration | Backup/recovery |
+
+    Sync-back happens automatically. Download is for retrieving files after the fact.
+  </Accordion>
+</AccordionGroup>
+
+## Secrets & GitHub
+
+<AccordionGroup>
+  <Accordion title="How do I give Claude access to private repos?">
+    Set up a GitHub token:
+    ```bash
+    catty secrets add github
+    ```
+    This stores your token securely. Future sessions automatically have GitHub access.
+  </Accordion>
+
+  <Accordion title="Are my secrets secure?">
+    Yes. Secrets are:
+    - Encrypted with AES-256-GCM
+    - Stored locally (never on Catty servers)
+    - Machine-bound (can't be decrypted elsewhere)
+    - Only transmitted over HTTPS
+  </Accordion>
+
+  <Accordion title="What can Claude do with a GitHub token?">
+    With a token that has `repo` scope, Claude can:
+    - Clone private repositories
+    - Push commits
+    - Create branches
+    - Create pull requests
+    - Manage issues
+  </Accordion>
+</AccordionGroup>
+
+## Security & Privacy
+
+<AccordionGroup>
+  <Accordion title="Is my code private?">
+    Yes. Each session runs in its own isolated cloud machine. Your workspace files exist only on that machine and in cloud storage (encrypted, accessible only to you).
+  </Accordion>
+
+  <Accordion title="Where are my credentials stored?">
+    Locally at `~/.catty/credentials.json` with restricted permissions (0600). Credentials are only sent to the Catty API for authentication.
+  </Accordion>
+
+  <Accordion title="Does Catty see my code?">
+    Your workspace is uploaded to the session machine and saved to cloud storage. However:
+    - Only you can access your workspace data
+    - Cloud storage is encrypted
+    - Catty doesn't analyze or process your code
+  </Accordion>
+</AccordionGroup>
+
+## Billing
+
+<AccordionGroup>
+  <Accordion title="How does billing work?">
+    Catty offers two plans:
+    - **Free tier**: Limited usage per month
+    - **Pro**: $25/month for higher limits
+
+    See [Pricing](/pricing) for details.
+  </Accordion>
+
+  <Accordion title="Do I need my own Anthropic API key?">
+    No. Catty provides Claude API access. You don't need your own API key.
+  </Accordion>
+
+  <Accordion title="Do I pay for the cloud machines?">
+    No. Cloud compute costs are included in your plan. You only pay based on usage.
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Where can I report bugs?">
+    Open an issue on GitHub: [github.com/diggerhq/catty/issues](https://github.com/diggerhq/catty/issues)
+
+    Include:
+    - CLI version (`catty version`)
+    - OS and architecture
+    - Full error message
+    - Steps to reproduce
+  </Accordion>
+
+  <Accordion title="Where can I get help?">
+    - Check [Troubleshooting](/troubleshooting) for common issues
+    - Open a GitHub issue for bugs
+    - Review this FAQ for general questions
+  </Accordion>
+</AccordionGroup>

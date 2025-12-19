@@ -1,0 +1,55 @@
+---
+title: "What is Catty?"
+description: "Run Claude Code in isolated cloud environments with native terminal feel"
+---
+
+Catty is a remote AI agent streaming platform that runs [Claude Code](https://docs.anthropic.com/en/docs/claude-code) sessions in isolated cloud environments. It streams the terminal directly to your local machine via WebSocket, giving you a native terminal experience while all the heavy lifting happens in the cloud.
+
+## Key Benefits
+
+<CardGroup cols={2}>
+  <Card title="Sessions Keep Running" icon="clock">
+    Start a session at work, close your laptop, reconnect from home. Sessions persist in the cloud until you stop them.
+  </Card>
+
+  <Card title="Cloud Persistence" icon="cloud">
+    Workspaces auto-save every 30 seconds. Download your work anytime, even after stopping a session.
+  </Card>
+
+  <Card title="GitHub Integration" icon="github">
+    Add your GitHub token once, and Claude can clone private repos, push commits, and create pull requests.
+  </Card>
+
+  <Card title="Native Terminal Feel" icon="terminal">
+    The remote session feels exactly like running Claude Code locally. Same experience, cloud persistence.
+  </Card>
+</CardGroup>
+
+## Quick Example
+
+```bash
+# Install
+npm install -g @diggerhq/catty
+
+# Login (one-time)
+catty login
+
+# Start a session
+catty new
+
+# Claude Code starts with your current directory uploaded
+# Changes sync back in real-time
+# Workspace saves to cloud every 30 seconds
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Get up and running in 2 minutes
+  </Card>
+
+  <Card title="How It Works" icon="diagram-project" href="/how-it-works">
+    Understand the architecture
+  </Card>
+</CardGroup>

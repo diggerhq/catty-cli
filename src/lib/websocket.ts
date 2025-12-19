@@ -3,7 +3,6 @@ import { appendFileSync } from 'fs';
 import { homedir } from 'os';
 import { Terminal } from './terminal.js';
 import {
-  SYNC_BACK_ACK_TIMEOUT_MS,
   WS_POLICY_VIOLATION,
   WS_READ_TIMEOUT_MS,
 } from './config.js';
@@ -11,13 +10,14 @@ import {
   parseMessage,
   createResizeMessage,
   createPongMessage,
-  createSyncBackMessage,
   createFileUploadMessage,
   createFileUploadChunkMessage,
+  createSyncBackMessage,
   type Message,
   type ExitMessage,
   type ErrorMessage,
   type FileChangeMessage,
+  type SyncBackAckMessage,
 } from '../protocol/messages.js';
 import { applyRemoteFileChange } from './syncback.js';
 import {
@@ -50,7 +50,7 @@ export interface WebSocketConnectOptions {
   connectURL: string;
   connectToken: string;
   headers: Record<string, string>;
-  syncBack: boolean;
+  syncBack?: boolean; // Enable sync-back of remote file changes to local
   onExit?: (code: number) => void;
 }
 
@@ -72,7 +72,6 @@ export async function connectToSession(
   });
 
   return new Promise((resolve, reject) => {
-    let syncBackAcked = false;
     let exitCode = 0;
     let connectionClosed = false;
     let connectionOpened = false;
@@ -98,6 +97,9 @@ export async function connectToSession(
     // Handle Ctrl+C from signal (works when NOT in raw mode)
     const handleSigint = () => {
       userInterrupted = true;
+      if (opts.syncBack) {
+        process.stderr.write('\r\n\x1b[33mSync paused. Run `catty sync <label>` to pull latest changes.\x1b[0m\r\n');
+      }
       cleanup();
       try {
         ws.close();
@@ -112,6 +114,9 @@ export async function connectToSession(
     const handleSigquit = () => {
       userInterrupted = true;
       process.stderr.write('\r\n\x1b[33mForce quit (Ctrl+\\)\x1b[0m\r\n');
+      if (opts.syncBack) {
+        process.stderr.write('\x1b[33mSync paused. Run `catty sync <label>` to pull latest changes.\x1b[0m\r\n');
+      }
       cleanup();
       try {
         ws.close();
@@ -197,6 +202,9 @@ export async function connectToSession(
           // Double Ctrl+C detected - exit catty immediately
           userInterrupted = true;
           process.stderr.write('\r\n');
+          if (opts.syncBack) {
+            process.stderr.write('\x1b[33mSync paused. Run `catty sync <label>` to pull latest changes.\x1b[0m\r\n');
+          }
           cleanup();
           try {
             ws.close();
@@ -403,20 +411,6 @@ export async function connectToSession(
       connectionOpened = true;
       clearTimeout(connectionTimeout);
 
-      // Enable sync-back if requested
-      if (opts.syncBack) {
-        ws.send(createSyncBackMessage(true));
-
-        // Warn if no ack after timeout
-        setTimeout(() => {
-          if (!syncBackAcked) {
-            process.stderr.write(
-              '\r\n(sync-back) No ack from executor yet — this machine may be running an older catty-exec image without sync-back.\r\n'
-            );
-          }
-        }, SYNC_BACK_ACK_TIMEOUT_MS);
-      }
-
       // Enter raw mode
       terminal.makeRaw();
 
@@ -426,6 +420,12 @@ export async function connectToSession(
       // Send initial size
       const { cols, rows } = terminal.getSize();
       ws.send(createResizeMessage(cols, rows));
+
+      // Request sync-back if enabled
+      if (opts.syncBack) {
+        debugLog('requesting sync-back');
+        ws.send(createSyncBackMessage(true));
+      }
 
       // Handle resize
       terminal.onResize(handleResize);
@@ -471,12 +471,17 @@ export async function connectToSession(
         case 'ping':
           ws.send(createPongMessage());
           break;
-        case 'file_change':
-          applyRemoteFileChange(msg as FileChangeMessage);
+        case 'sync_back_ack': {
+          const ackMsg = msg as SyncBackAckMessage;
+          debugLog(`sync-back ack: enabled=${ackMsg.enabled}, dir=${ackMsg.workspace_dir}`);
           break;
-        case 'sync_back_ack':
-          syncBackAcked = true;
+        }
+        case 'file_change': {
+          const changeMsg = msg as FileChangeMessage;
+          debugLog(`file change: ${changeMsg.action} ${changeMsg.path}`);
+          applyRemoteFileChange(changeMsg);
           break;
+        }
       }
     }
 
