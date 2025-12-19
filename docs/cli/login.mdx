@@ -1,0 +1,43 @@
+---
+title: "catty login"
+description: "Authenticate with Catty"
+---
+
+Opens your browser to authenticate with Catty. One-time setup required before using other commands.
+
+## Synopsis
+
+```bash
+catty login
+```
+
+## What Happens
+
+1. Opens your default browser
+2. You authenticate (email, Google, or enterprise SSO)
+3. Credentials are saved locally
+
+## Credentials Storage
+
+Stored at `~/.catty/credentials.json` with `0600` permissions (owner read/write only).
+
+Contains:
+- Access token
+- Refresh token
+- User ID
+- Email
+
+## Token Refresh
+
+Tokens are automatically refreshed when they expire. You don't need to log in again unless you explicitly log out.
+
+## Authentication Methods
+
+- Email (magic link)
+- Google
+- Enterprise SSO (if configured)
+
+## See Also
+
+- [catty logout](/cli/logout) - Remove credentials
+- [CLI Overview](/cli/overview) - All commands

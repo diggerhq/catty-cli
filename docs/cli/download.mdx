@@ -1,0 +1,89 @@
+---
+title: "catty download"
+description: "Download workspace from a session"
+---
+
+Downloads a workspace snapshot from a session to your local machine. Works for both running and stopped sessions.
+
+## Synopsis
+
+```bash
+catty download <label> [path] [options]
+```
+
+## Arguments
+
+| Argument | Description |
+|----------|-------------|
+| `label` | Session label (e.g., `brave-tiger-1234`) |
+| `path` | Destination path (default: `./<label>`) |
+
+## Options
+
+| Option | Description |
+|--------|-------------|
+| `--format <type>` | Output format: `dir` (default) or `tar.gz` |
+
+## Examples
+
+```bash
+# Download to a new directory named after the session
+catty download brave-tiger-1234
+# Creates: ./brave-tiger-1234/
+
+# Download to a specific path
+catty download brave-tiger-1234 ./my-backup
+
+# Download as a tarball
+catty download brave-tiger-1234 --format tar.gz
+# Creates: ./brave-tiger-1234.tar.gz
+
+# Download tarball to specific path
+catty download brave-tiger-1234 ./backup.tar.gz --format tar.gz
+```
+
+## How It Works
+
+1. Fetches the latest workspace snapshot from cloud storage
+2. Downloads the tarball
+3. Extracts to destination (or saves as tarball with `--format tar.gz`)
+
+## When to Use
+
+- After stopping a session to retrieve your work
+- To get a backup of a running session
+- When sync-back was disabled
+- After unexpected disconnection
+
+<Note>
+  Workspaces are saved every 30 seconds (first save ~10 seconds after session start). If you just created a session, wait a moment before downloading.
+</Note>
+
+## What's Included
+
+The download includes everything in `/workspace` except:
+
+```
+.git/
+node_modules/
+__pycache__/
+.venv/
+venv/
+.cache/
+.npm/
+.yarn/
+```
+
+## Error: No Workspace Found
+
+If you see "No workspace snapshot found":
+
+- The session may have just started (wait 30 seconds)
+- Cloud persistence may not be enabled for older sessions
+- The session may have failed before first save
+
+## See Also
+
+- [catty sync](/cli/sync) - Sync to current directory (overwrites)
+- [catty stop](/cli/stop) - Stop a session
+- [Workspaces](/concepts/workspaces) - How cloud persistence works

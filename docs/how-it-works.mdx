@@ -5,23 +5,29 @@ description: "Understand the architecture behind Catty"
 
 Catty connects your local terminal to Claude Code running in isolated cloud machines. Here's how all the pieces fit together.
 
+## Architecture
+
+The **catty CLI** on your machine communicates with the **Catty API** to provision isolated **session machines** in the cloud. Each session machine runs **Claude Code** in a PTY. Your terminal connects directly to Claude Code via WebSocket, streaming input and output in real-time. File changes sync back to your local directory, and workspaces are periodically saved to **cloud storage** for persistence.
+
 ## Components
 
 <AccordionGroup>
-  <Accordion title="catty CLI" icon="terminal">
+  <Accordion title="Catty CLI" icon="terminal">
     The command-line tool you install via npm. It handles:
     - User authentication
     - Creating and managing sessions
     - Uploading your workspace
     - WebSocket connection for terminal streaming
-    - Applying remote file changes locally (sync-back)
+    - Real-time sync-back of file changes
+    - Encrypted secrets management
   </Accordion>
 
   <Accordion title="Catty API" icon="server">
     The hosted API server. It handles:
     - User authentication and session management
     - Provisioning cloud machines
-    - Session metadata storage
+    - Presigned URLs for workspace downloads
+    - Billing and quota management
   </Accordion>
 
   <Accordion title="Session Machine" icon="microchip">
@@ -30,15 +36,53 @@ Catty connects your local terminal to Claude Code running in isolated cloud mach
     - Running Claude Code in a PTY
     - WebSocket relay for terminal I/O
     - File watching for sync-back
+    - Periodic workspace saves to cloud storage
+  </Accordion>
+
+  <Accordion title="Cloud Storage" icon="cloud">
+    Secure storage for workspace persistence:
+    - Receives workspace snapshots every 30 seconds
+    - Enables downloads via presigned URLs
+    - Survives session termination
   </Accordion>
 </AccordionGroup>
 
-## Session Creation
+## Data Flow
 
-When you run `catty login`, you authenticate in your browser and credentials are stored locally. Then `catty new` calls the API, which provisions a new cloud machine and returns connection details including a session label like "brave-tiger-1234".
+### Session Creation
 
-The CLI zips your current directory (respecting `.gitignore`) and uploads it to the session machine. It then establishes a WebSocket connection, and the machine spawns Claude Code in a PTY. Terminal input/output is streamed bidirectionally, so the experience feels like running Claude Code locally.
+1. `catty new` calls the API
+2. API provisions a cloud machine
+3. Machine starts and reports ready
+4. CLI zips your workspace (respecting `.gitignore`)
+5. Workspace uploads to session machine
+6. WebSocket connection established
+7. Claude Code spawns in a PTY
+8. Terminal I/O streams bidirectionally
 
-## File Sync-Back
+### File Sync-Back
 
-When Claude modifies files in the remote workspace, the session machine detects the changes and sends them over the WebSocket. The CLI receives each change, validates the path, and applies it to your local directory in real-time.
+1. Claude modifies a file in `/workspace`
+2. File watcher detects the change
+3. Change sent over WebSocket as JSON message
+4. CLI validates path (security check)
+5. File written to your local directory
+
+### Cloud Persistence
+
+1. Session saves workspace every 30 seconds
+2. Tarball uploaded to cloud storage
+3. When you run `catty download`:
+   - API generates presigned URL
+   - CLI downloads directly from cloud storage
+   - Extracts to your local directory
+
+## Security
+
+| Aspect | Implementation |
+|--------|----------------|
+| Authentication | OAuth via browser, tokens stored locally |
+| Secrets | AES-256-GCM encrypted, machine-bound |
+| Transport | HTTPS for API, WSS for WebSocket |
+| Isolation | Each session runs in its own machine |
+| File access | Sessions can only access `/workspace` |
