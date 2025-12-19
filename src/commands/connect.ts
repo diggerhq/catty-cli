@@ -32,10 +32,56 @@ export const connectCommand = new Command('connect')
         const session = await client.getSession(label, true);
 
         if (session.status === 'stopped') {
-          throw new Error(`Session ${session.label} is stopped`);
+          // Session stopped - show history and timeout message
+          if (session.last_output && session.last_output.trim()) {
+            console.log('');
+            console.log('─── Last Terminal Output ───');
+            console.log('');
+            // Write the raw terminal output (it may contain ANSI codes)
+            process.stdout.write(session.last_output);
+            console.log('');
+            console.log('─────────────────────────────');
+            console.log('');
+          }
+
+          console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+          console.error('  This sandbox has timed out due to inactivity');
+          console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+          console.error('');
+          console.error(`To sync all your files, run:`);
+          console.error(`  \x1b[36mcatty sync ${label}\x1b[0m`);
+          console.error('');
+          console.error(`To start a new session in the same directory, run:`);
+          console.error(`  \x1b[36mcatty new\x1b[0m`);
+          console.error('');
+          process.exit(1);
         }
-        if (session.machine_state && session.machine_state !== 'started') {
-          throw new Error(`Machine is not running (state: ${session.machine_state})`);
+        if (session.machine_state && session.machine_state !== 'started' && session.machine_state !== 'running') {
+          // Machine not running - show history and timeout message
+          if (session.last_output && session.last_output.trim()) {
+            console.log('');
+            console.log('─── Last Terminal Output ───');
+            console.log('');
+            // Write the raw terminal output (it may contain ANSI codes)
+            process.stdout.write(session.last_output);
+            console.log('');
+            console.log('─────────────────────────────');
+            console.log('');
+          }
+
+          console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+          console.error('  This sandbox has timed out due to inactivity');
+          console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+          console.error('');
+          console.error(`Machine state: ${session.machine_state}`);
+          console.error('');
+          console.error(`To sync all your files, run:`);
+          console.error(`  \x1b[36mcatty sync ${label}\x1b[0m`);
+          console.error('');
+          console.error(`To start a new session in the same directory, run:`);
+          console.error(`  \x1b[36mcatty new\x1b[0m`);
+          console.error('');
+          process.exit(1);
         }
 
         if (reconnectAttempts > 0) {

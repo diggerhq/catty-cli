@@ -32,6 +32,7 @@ export interface SessionInfo {
   status: string;
   created_at: string;
   machine_state?: string;
+  last_output?: string;
 }
 
 export interface RunOptions {
