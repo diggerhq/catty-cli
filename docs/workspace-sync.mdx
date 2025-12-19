@@ -3,7 +3,7 @@ title: "Workspace & Files"
 description: "Upload your workspace, sync changes, and share images with Claude"
 ---
 
-Catty provides bidirectional file synchronization between your local directory and the remote session, plus the ability to upload images and documents during a session.
+Catty provides multiple ways to keep your files in sync: upload on session start, real-time sync-back during sessions, and cloud persistence for downloading anytime.
 
 ## Upload (Local to Remote)
 
@@ -177,8 +177,68 @@ catty connect brave-tiger-1234 --no-sync-back
 ```
 
 <Note>
-  Disabling sync-back means you'll need to manually retrieve any files Claude creates or modifies.
+  Disabling sync-back means you'll need to use `catty download` or `catty sync` to retrieve files Claude creates or modifies.
 </Note>
+
+---
+
+## Cloud Persistence
+
+Workspaces are automatically saved to the cloud every 30 seconds, providing a backup of your session's files.
+
+### How It Works
+
+1. First save happens ~10 seconds after session start
+2. Subsequent saves every 30 seconds
+3. Final save when session stops
+4. Files stored securely in cloud storage
+
+### Download Workspace
+
+Download a workspace snapshot to a new directory:
+
+```bash
+catty download brave-tiger-1234
+```
+
+Download as a tarball:
+
+```bash
+catty download brave-tiger-1234 --format tar.gz
+```
+
+### Sync to Current Directory
+
+Overwrite current directory with remote workspace:
+
+```bash
+# Preview first
+catty sync brave-tiger-1234 --dry-run
+
+# Then sync
+catty sync brave-tiger-1234
+```
+
+### What Gets Saved
+
+Your entire `/workspace` directory, **except**:
+
+```
+.git/
+node_modules/
+__pycache__
+.venv/
+venv/
+.cache/
+.npm/
+.yarn/
+```
+
+<Tip>
+  Cloud persistence means you can stop a session and retrieve your work later, even if sync-back was disabled or you disconnected unexpectedly.
+</Tip>
+
+---
 
 ## Best Practices
 

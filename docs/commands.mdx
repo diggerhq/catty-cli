@@ -177,8 +177,174 @@ catty stop brave-tiger-1234
 ```
 
 <Warning>
-  Stopping a session destroys the cloud machine. Files not synced back are lost.
+  Stopping a session destroys the cloud machine. However, workspaces are automatically saved to the cloud every 30 seconds, so you can download them later with `catty download`.
 </Warning>
+
+---
+
+## catty download
+
+Download a workspace snapshot from a session.
+
+```bash
+catty download <label> [path]
+```
+
+### Arguments
+
+| Argument | Description |
+|----------|-------------|
+| `label` | Session label |
+| `path` | Destination path (default: `./<label>`) |
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--format <type>` | Output format: `dir` (default) or `tar.gz` |
+
+### Examples
+
+```bash
+# Download to a new directory
+catty download brave-tiger-1234
+
+# Download to specific path
+catty download brave-tiger-1234 ./my-backup
+
+# Download as tarball
+catty download brave-tiger-1234 --format tar.gz
+```
+
+<Note>
+  Workspaces are automatically saved to the cloud every 30 seconds. The first save happens about 10 seconds after session start.
+</Note>
+
+---
+
+## catty sync
+
+Sync a remote workspace to your current directory.
+
+```bash
+catty sync <label> [flags]
+```
+
+### Arguments
+
+| Argument | Description |
+|----------|-------------|
+| `label` | Session label |
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--dry-run` | Show what would be synced without making changes |
+
+### Examples
+
+```bash
+# Sync to current directory
+catty sync brave-tiger-1234
+
+# Preview what would be synced
+catty sync brave-tiger-1234 --dry-run
+```
+
+<Warning>
+  This overwrites local files with the remote versions. Use `--dry-run` first to preview changes.
+</Warning>
+
+---
+
+## catty secrets
+
+Manage secrets that are passed to remote sessions as environment variables.
+
+```bash
+catty secrets <subcommand>
+```
+
+### Subcommands
+
+#### catty secrets add
+
+Add a secret interactively.
+
+```bash
+catty secrets add <name>
+catty secrets add github   # Guided GitHub token setup
+```
+
+#### catty secrets set
+
+Set a secret non-interactively.
+
+```bash
+catty secrets set <name> <value>
+```
+
+#### catty secrets list
+
+List configured secret names.
+
+```bash
+catty secrets list
+```
+
+#### catty secrets remove
+
+Remove a secret.
+
+```bash
+catty secrets remove <name>
+```
+
+#### catty secrets test
+
+Test a secret (currently supports `github`).
+
+```bash
+catty secrets test github
+```
+
+### Examples
+
+```bash
+# Interactive GitHub token setup (recommended)
+catty secrets add github
+
+# Set any secret
+catty secrets set MY_API_KEY sk-xxx
+
+# List all secrets
+catty secrets list
+
+# Test GitHub token
+catty secrets test github
+
+# Remove a secret
+catty secrets remove MY_API_KEY
+```
+
+### Security
+
+- Secrets are encrypted with AES-256-GCM
+- Stored at `~/.catty/secrets.json` with `0600` permissions
+- Encryption key is derived from machine-specific data (hostname + homedir)
+- Secrets can only be decrypted on the machine they were created on
+
+### GitHub Integration
+
+With a GitHub token configured, Claude can:
+- Clone private repositories
+- Push commits
+- Create pull requests using `gh` CLI
+
+<Tip>
+  Use `catty secrets add github` for a guided setup that opens the GitHub token creation page and validates your token.
+</Tip>
 
 ---
 

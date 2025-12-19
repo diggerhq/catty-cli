@@ -48,6 +48,7 @@
       "pages": [
         "sessions",
         "workspace-sync",
+        "secrets",
         "pricing"
       ]
     },
