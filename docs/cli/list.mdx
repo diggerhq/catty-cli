@@ -1,0 +1,34 @@
+---
+title: "catty list"
+description: "List all your sessions"
+---
+
+Shows all sessions associated with your account.
+
+## Synopsis
+
+```bash
+catty list
+```
+
+## Output
+
+```
+LABEL                STATUS    CREATED
+brave-tiger-1234     running   2 hours ago
+swift-falcon-5678    stopped   1 day ago
+clever-dolphin-9012  running   5 minutes ago
+```
+
+## Status Values
+
+| Status | Description |
+|--------|-------------|
+| `running` | Session is active and accepting connections |
+| `stopped` | Session has been stopped |
+
+## See Also
+
+- [catty connect](/cli/connect) - Reconnect to a session
+- [catty stop](/cli/stop) - Stop a session
+- [catty new](/cli/new) - Start a new session

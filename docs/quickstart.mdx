@@ -42,7 +42,7 @@ Get started with Catty in three simple steps.
   </Step>
 </Steps>
 
-You're now connected to Claude Code running in the cloud. Work with it just like you would locally - all changes are synced back to your local directory in real-time.
+You're now connected to Claude Code running in the cloud. Work with it just like you would locally - all changes sync back to your local directory in real-time.
 
 ## Reconnecting to Sessions
 
@@ -58,22 +58,30 @@ List your sessions:
 catty list
 ```
 
+## Downloading Your Work
+
+Workspaces are automatically saved to the cloud. Download anytime:
+
+```bash
+catty download brave-tiger-1234
+```
+
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Sessions" icon="layer-group" href="/sessions">
-    Learn about managing sessions
+  <Card title="Sessions" icon="layer-group" href="/concepts/sessions">
+    Learn about session lifecycle
   </Card>
 
-  <Card title="Workspace Sync" icon="arrows-rotate" href="/workspace-sync">
+  <Card title="Workspaces" icon="folder" href="/concepts/workspaces">
     Understand file synchronization
   </Card>
 
-  <Card title="Commands" icon="terminal" href="/commands">
-    Full CLI reference
+  <Card title="GitHub Integration" icon="github" href="/concepts/github">
+    Set up GitHub access for Claude
   </Card>
 
-  <Card title="FAQ" icon="circle-question" href="/faq">
-    Common questions answered
+  <Card title="CLI Reference" icon="terminal" href="/cli/overview">
+    Full command reference
   </Card>
 </CardGroup>

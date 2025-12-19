@@ -24,14 +24,19 @@
   },
   "anchors": [
     {
-      "name": "GitHub",
-      "icon": "github",
-      "url": "https://github.com/diggerhq/catty-cli"
+      "name": "Pricing",
+      "icon": "credit-card",
+      "url": "/pricing"
     },
     {
       "name": "npm",
       "icon": "npm",
       "url": "https://www.npmjs.com/package/@diggerhq/catty"
+    },
+    {
+      "name": "GitHub",
+      "icon": "github",
+      "url": "https://github.com/diggerhq/catty-cli"
     }
   ],
   "navigation": [
@@ -40,23 +45,42 @@
       "pages": [
         "introduction",
         "quickstart",
-        "how-it-works"
-      ]
-    },
-    {
-      "group": "User Guide",
-      "pages": [
-        "sessions",
-        "workspace-sync",
-        "secrets",
+        "how-it-works",
         "pricing"
       ]
     },
     {
-      "group": "Reference",
+      "group": "Concepts",
       "pages": [
-        "commands",
-        "common-issues",
+        "concepts/sessions",
+        "concepts/workspaces",
+        "concepts/sync-back",
+        "concepts/secrets",
+        "concepts/github",
+        "concepts/file-uploads"
+      ]
+    },
+    {
+      "group": "CLI Reference",
+      "pages": [
+        "cli/overview",
+        "cli/new",
+        "cli/connect",
+        "cli/list",
+        "cli/stop",
+        "cli/download",
+        "cli/sync",
+        "cli/secrets",
+        "cli/login",
+        "cli/logout",
+        "cli/update",
+        "cli/version"
+      ]
+    },
+    {
+      "group": "Support",
+      "pages": [
+        "troubleshooting",
         "faq"
       ]
     }
