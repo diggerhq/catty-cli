@@ -40,7 +40,8 @@ catty new --enable-prompts   # Enable permission prompts (default: auto-approve)
 catty connect <label>        # Reconnect to an existing session
 catty list                   # List your sessions
 catty stop <label>           # Stop a session
-catty download <label>       # Download workspace to local directory
+catty download <label>       # Download workspace to new directory
+catty sync <label>           # Sync workspace to current directory
 
 catty secrets add github     # Add GitHub token (interactive)
 catty secrets list           # List configured secrets
