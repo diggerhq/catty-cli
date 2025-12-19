@@ -7,21 +7,7 @@ Catty connects your local terminal to Claude Code running in isolated cloud mach
 
 ## Architecture
 
-```
-┌─────────────┐     ┌─────────────┐     ┌──────────────┐
-│  catty CLI  │────▶│  Catty API  │────▶│   Session    │
-│   (local)   │     │   (cloud)   │     │   Machine    │
-└─────────────┘     └─────────────┘     └──────────────┘
-      │                   │                    │
-      │                   │                    ▼
-      │                   │              ┌──────────────┐
-      │                   │              │ Claude Code  │
-      │                   │              └──────────────┘
-      │                   │                    │
-      └───────────────────┴────────────────────┘
-                    WebSocket
-                 (PTY streaming)
-```
+The **catty CLI** on your machine communicates with the **Catty API** to provision isolated **session machines** in the cloud. Each session machine runs **Claude Code** in a PTY. Your terminal connects directly to Claude Code via WebSocket, streaming input and output in real-time. File changes sync back to your local directory, and workspaces are periodically saved to **cloud storage** for persistence.
 
 ## Components
 
