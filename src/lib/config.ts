@@ -1,8 +1,10 @@
 export const DEFAULT_API_ADDR = 'https://api.catty.dev';
 export const CREDENTIALS_DIR = '.catty';
 export const CREDENTIALS_FILE = 'credentials.json';
+
 export const SECRETS_FILE = 'secrets.json';
-export const MAX_UPLOAD_SIZE = 100 * 1024 * 1024; // 100MB
+export const MAX_UPLOAD_SIZE = 1024 * 1024 * 1024; // 1GB
+
 
 // Timeouts
 export const API_TIMEOUT_MS = 120_000; // 120 seconds for API requests (machine creation can be slow)
