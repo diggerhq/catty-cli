@@ -1,5 +1,5 @@
 ---
-title: "Common Issues"
+title: "Troubleshooting"
 description: "Solutions to frequently encountered problems"
 ---
 
@@ -155,6 +155,20 @@ Solutions to problems you might encounter when using Catty.
     cd /path/to/original/directory
     catty connect <label>
     ```
+  </Accordion>
+
+  <Accordion title="Download shows 'No workspace snapshot found'">
+    **Error:** `No workspace snapshot found for <label>`
+
+    **Causes:**
+    - Session just started (first save is ~10 seconds after start)
+    - Older session without cloud persistence
+    - Session failed before first save
+
+    **Solutions:**
+    1. Wait 30 seconds and try again
+    2. Check if the session is running: `catty list`
+    3. For older sessions, use sync-back instead: `catty connect <label>`
   </Accordion>
 </AccordionGroup>
 

@@ -1,0 +1,67 @@
+---
+title: "catty connect"
+description: "Reconnect to an existing session"
+---
+
+Reconnects your terminal to a running session. Use this after disconnecting or to connect from a different machine.
+
+## Synopsis
+
+```bash
+catty connect <label> [options]
+```
+
+## Arguments
+
+| Argument | Description |
+|----------|-------------|
+| `label` | Session label (e.g., `brave-tiger-1234`) |
+
+## Options
+
+| Option | Description |
+|--------|-------------|
+| `--no-sync-back` | Disable sync-back for this connection |
+| `--no-auto-reconnect` | Disable automatic reconnection on disconnect |
+
+## Examples
+
+```bash
+# Reconnect to a session
+catty connect brave-tiger-1234
+
+# Reconnect without sync-back
+catty connect brave-tiger-1234 --no-sync-back
+
+# Reconnect without auto-reconnect
+catty connect brave-tiger-1234 --no-auto-reconnect
+```
+
+## Finding Session Labels
+
+Use `catty list` to see your sessions:
+
+```bash
+$ catty list
+LABEL                STATUS    CREATED
+brave-tiger-1234     running   2 hours ago
+swift-falcon-5678    running   5 minutes ago
+```
+
+## Auto-Reconnect
+
+By default, if your connection drops (network issue, laptop sleep), Catty automatically attempts to reconnect. Disable this with `--no-auto-reconnect`.
+
+## Sync-Back on Reconnect
+
+When you reconnect, sync-back starts fresh. Changes made while disconnected aren't automatically synced - use `catty sync <label>` to pull them.
+
+<Tip>
+  Connect from a different directory than where you created the session? Sync-back will write files to your current directory, which may not be what you want.
+</Tip>
+
+## See Also
+
+- [catty new](/cli/new) - Start a new session
+- [catty list](/cli/list) - List sessions
+- [catty sync](/cli/sync) - Sync workspace to current directory

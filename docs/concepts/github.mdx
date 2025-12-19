@@ -1,0 +1,120 @@
+---
+title: "GitHub Integration"
+description: "Give Claude access to your GitHub repositories"
+---
+
+With a GitHub token configured, Claude can clone private repositories, push commits, and create pull requests using Git and the GitHub CLI (`gh`).
+
+<Note>
+  GitHub integration is built on [Secrets](/concepts/secrets). The `catty secrets add github` command provides a guided setup specifically for GitHub tokens.
+</Note>
+
+## Setup
+
+Run the guided setup:
+
+```bash
+catty secrets add github
+```
+
+This will:
+
+1. Open GitHub's token creation page in your browser
+2. Prompt you to paste the generated token
+3. Validate the token works
+4. Save both `GITHUB_TOKEN` and `GH_TOKEN` (for compatibility)
+
+## Required Token Scopes
+
+When creating the token on GitHub, select:
+
+- **`repo`** - Full control of private repositories
+
+This is sufficient for most workflows. Add more scopes only if needed.
+
+## What Claude Can Do
+
+With a GitHub token, Claude can:
+
+| Action | Example Command |
+|--------|-----------------|
+| Clone private repos | `git clone https://github.com/yourorg/private-repo` |
+| Push commits | `git push origin main` |
+| Create branches | `git checkout -b feature-branch` |
+| Create pull requests | `gh pr create --title "Add feature"` |
+| Manage issues | `gh issue create --title "Bug report"` |
+| Review PRs | `gh pr view 123` |
+
+## Example Session
+
+```bash
+# Start a session (GitHub token is automatically passed)
+catty new --no-upload
+
+# Claude can now work with your private repos
+> Clone https://github.com/yourorg/my-app and add a new API endpoint
+
+# Claude runs:
+git clone https://github.com/yourorg/my-app
+cd my-app
+# ... makes changes ...
+git add .
+git commit -m "Add new API endpoint"
+git push origin main
+gh pr create --title "Add new API endpoint" --body "..."
+```
+
+## Verifying Setup
+
+Test your token:
+
+```bash
+catty secrets test github
+```
+
+Output:
+```
+Testing GitHub token...
+✓ Token valid (user: yourname)
+```
+
+## Token Storage
+
+The token is stored encrypted at `~/.catty/secrets.json` using AES-256-GCM. It's only decrypted when starting a session and sent over HTTPS. See [Secrets](/concepts/secrets) for encryption details.
+
+## Session Environment
+
+Inside the session:
+
+```bash
+# Both variables are set
+echo $GITHUB_TOKEN
+echo $GH_TOKEN
+
+# gh CLI auto-detects the token
+gh auth status
+# → Logged in to github.com as yourname
+```
+
+## Updating Your Token
+
+```bash
+# Remove old token
+catty secrets remove GITHUB_TOKEN
+
+# Add new token
+catty secrets add github
+```
+
+## Revoking Access
+
+If you need to revoke access:
+
+1. Go to GitHub → Settings → Developer settings → Personal access tokens
+2. Revoke the token
+3. Remove from Catty: `catty secrets remove GITHUB_TOKEN`
+
+## See Also
+
+- [Secrets](/concepts/secrets) - How secrets work
+- [catty secrets](/cli/secrets) - CLI command reference

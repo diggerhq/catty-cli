@@ -1,0 +1,145 @@
+---
+title: "Workspaces"
+description: "How files are uploaded, stored, and persisted"
+---
+
+Your workspace is the `/workspace` directory in a session. It starts with your uploaded files and is automatically saved to the cloud throughout the session.
+
+## Upload on Session Start
+
+When you run `catty new`, your current directory is zipped and uploaded:
+
+```bash
+cd my-project
+catty new
+# → Uploading workspace...
+# → Workspace uploaded (2.3 MB)
+```
+
+### What Gets Uploaded
+
+Your entire current directory, **except**:
+
+- Files matching patterns in `.gitignore`
+- Default exclusions (see below)
+
+### Default Exclusions
+
+Always excluded, regardless of `.gitignore`:
+
+```
+.git/
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.DS_Store
+*.log
+```
+
+<Tip>
+  Add patterns to your `.gitignore` to exclude additional files.
+</Tip>
+
+### Upload Limits
+
+| Limit | Value |
+|-------|-------|
+| Maximum size | 100 MB |
+
+If your workspace exceeds 100 MB:
+
+1. Add large files to `.gitignore`
+2. Or use `--no-upload` and clone your repo in the session:
+
+```bash
+catty new --no-upload
+# Then in Claude: git clone https://github.com/...
+```
+
+### Skipping Upload
+
+```bash
+catty new --no-upload
+```
+
+Useful when:
+- Workspace is too large
+- You want an empty session
+- You'll clone a repo instead
+
+## Cloud Persistence
+
+Workspaces are automatically saved to cloud storage throughout the session.
+
+### How It Works
+
+1. **First save**: ~10 seconds after session start
+2. **Periodic saves**: Every 30 seconds
+3. **Final save**: When session stops
+
+### What Gets Saved
+
+Everything in `/workspace` **except**:
+
+```
+.git/
+node_modules/
+__pycache__/
+.venv/
+venv/
+.cache/
+.npm/
+.yarn/
+```
+
+### Why This Matters
+
+- **Recovery**: Download your work even after stopping a session
+- **Backup**: Get a snapshot of a running session
+- **Resilience**: Don't lose work if sync-back was disabled or you disconnected
+
+## Downloading Workspaces
+
+### To a New Directory
+
+```bash
+catty download brave-tiger-1234
+# Creates: ./brave-tiger-1234/
+```
+
+### To a Specific Path
+
+```bash
+catty download brave-tiger-1234 ./my-backup
+```
+
+### As a Tarball
+
+```bash
+catty download brave-tiger-1234 --format tar.gz
+```
+
+## Syncing to Current Directory
+
+Overwrite your current directory with the remote workspace:
+
+```bash
+# Preview first
+catty sync brave-tiger-1234 --dry-run
+
+# Then sync
+catty sync brave-tiger-1234
+```
+
+<Warning>
+  `catty sync` overwrites local files. Use `--dry-run` first.
+</Warning>
+
+## See Also
+
+- [Sync-Back](/concepts/sync-back) - Real-time sync during sessions
+- [catty download](/cli/download) - Download command reference
+- [catty sync](/cli/sync) - Sync command reference
