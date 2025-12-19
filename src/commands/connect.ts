@@ -10,9 +10,8 @@ const RECONNECT_DELAY_MS = 2000;
 export const connectCommand = new Command('connect')
   .description('Reconnect to an existing session')
   .argument('<label>', 'Session label (e.g., brave-tiger-1234)')
-  .option('--sync-back', 'Sync remote file changes back to local', true)
-  .option('--no-sync-back', 'Disable sync-back')
   .option('--no-auto-reconnect', 'Disable automatic reconnection on disconnect')
+  .option('--no-sync-back', "Don't sync remote file changes back to local")
   .action(async function (this: Command, label: string) {
     const opts = this.opts();
     const apiAddr = getAPIAddr(this.optsWithGlobals().api);
@@ -42,13 +41,16 @@ export const connectCommand = new Command('connect')
           console.log(`\x1b[32m✓ Reconnected to ${session.label}\x1b[0m`);
         } else {
           console.log(`Connecting to ${session.label}...`);
+          if (opts.syncBack) {
+            console.log(`  Sync-back: enabled (remote changes will sync to local)`);
+          }
         }
 
         const result: ConnectionResult = await connectToSession({
           connectURL: session.connect_url,
           connectToken: session.connect_token!,
           headers: { 'fly-force-instance-id': session.machine_id },
-          syncBack: opts.syncBack,
+          syncBack: opts.syncBack !== false,
         });
 
         // Handle the connection result
