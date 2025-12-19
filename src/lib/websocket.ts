@@ -29,7 +29,7 @@ import {
 
 // Debug logging to file (avoids terminal corruption)
 function debugLog(msg: string): void {
-  if (process.env.CATTY_DEBUG === '1') {
+  if (process.env.CATTY_DEBUG === '1' || process.env.CATTY_DEBUG_CLIENT === '1') {
     const logFile = `${homedir()}/.catty-debug.log`;
     appendFileSync(logFile, `${new Date().toISOString()} [ws] ${msg}\n`);
   }
@@ -52,6 +52,8 @@ export interface WebSocketConnectOptions {
   headers: Record<string, string>;
   syncBack?: boolean; // Enable sync-back of remote file changes to local
   onExit?: (code: number) => void;
+  initialCols?: number; // Initial terminal width
+  initialRows?: number; // Initial terminal height
 }
 
 export async function connectToSession(
@@ -63,7 +65,19 @@ export async function connectToSession(
     throw new Error('stdin is not a terminal');
   }
 
-  const ws = new WebSocket(opts.connectURL, {
+  // Get terminal size to pass as query params for initial PTY size
+  const { cols, rows } = terminal.getSize();
+  const initialCols = opts.initialCols ?? cols;
+  const initialRows = opts.initialRows ?? rows;
+
+  // Append terminal size to URL as query parameters
+  const url = new URL(opts.connectURL);
+  url.searchParams.set('cols', String(initialCols));
+  url.searchParams.set('rows', String(initialRows));
+
+  debugLog(`Connecting with initial size: ${initialCols}x${initialRows}`);
+
+  const ws = new WebSocket(url.toString(), {
     headers: {
       ...opts.headers,
       Authorization: `Bearer ${opts.connectToken}`,
@@ -411,6 +425,8 @@ export async function connectToSession(
       connectionOpened = true;
       clearTimeout(connectionTimeout);
 
+      debugLog(`WebSocket connection opened, debug logging enabled`);
+
       // Enter raw mode
       terminal.makeRaw();
 
@@ -419,6 +435,7 @@ export async function connectToSession(
 
       // Send initial size
       const { cols, rows } = terminal.getSize();
+      debugLog(`Initial terminal size: ${cols}x${rows}`);
       ws.send(createResizeMessage(cols, rows));
 
       // Request sync-back if enabled
@@ -438,9 +455,32 @@ export async function connectToSession(
     ws.on('message', (data: WebSocket.RawData, isBinary: boolean) => {
       // Update last data received time for health monitoring
       lastDataReceived = Date.now();
-      
+
       if (isBinary) {
-        process.stdout.write(data as Buffer);
+        // CRITICAL: Convert WebSocket.RawData to Buffer properly
+        // RawData can be Buffer, ArrayBuffer, or Buffer[] - we must handle all cases
+        // to avoid corrupting ANSI escape sequences
+        let buffer: Buffer;
+        let dataType: string;
+        if (Buffer.isBuffer(data)) {
+          buffer = data;
+          dataType = 'Buffer';
+        } else if (Array.isArray(data)) {
+          buffer = Buffer.concat(data);
+          dataType = `Buffer[${data.length}]`;
+        } else {
+          buffer = Buffer.from(data);
+          dataType = 'ArrayBuffer';
+        }
+
+        // Debug logging to file to avoid corrupting terminal
+        if (process.env.CATTY_DEBUG_CLIENT === '1') {
+          const previewLen = Math.min(buffer.length, 20);
+          const preview = buffer.slice(0, previewLen).toString('hex');
+          debugLog(`WS recv: type=${dataType} isBinary=${isBinary} bytes=${buffer.length} hex=${preview}`);
+        }
+
+        process.stdout.write(buffer);
       } else {
         try {
           const msg = parseMessage(data.toString());
