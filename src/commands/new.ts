@@ -16,6 +16,7 @@ export const newCommand = new Command('new')
   .option('--no-upload', "Don't upload current directory")
   .option('--no-auto-reconnect', 'Disable automatic reconnection on disconnect')
   .option('--no-secrets', "Don't pass stored secrets to session")
+  .option('--no-sync-back', "Don't sync remote file changes back to local")
   .option(
     '--enable-prompts',
     'Enable permission prompts (by default, all permissions are auto-approved)',
@@ -86,6 +87,9 @@ export const newCommand = new Command('new')
 
     console.log(`Session created: ${session.label}`);
     console.log(`  Reconnect with: catty connect ${session.label}`);
+    if (opts.syncBack) {
+      console.log(`  Sync-back: enabled (remote changes will sync to local)`);
+    }
 
     // Upload workspace
     if (opts.upload !== false) {
@@ -111,6 +115,7 @@ export const newCommand = new Command('new')
           connectURL: session.connect_url,
           connectToken: session.connect_token,
           headers: session.headers,
+          syncBack: opts.syncBack !== false,
         });
 
         // Handle the connection result
