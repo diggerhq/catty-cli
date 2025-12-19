@@ -3,16 +3,17 @@ import { getAPIAddr, sleep } from '../lib/config.js';
 import { isLoggedIn } from '../lib/auth.js';
 import { APIClient } from '../lib/api-client.js';
 import { connectToSession, type ConnectionResult } from '../lib/websocket.js';
+import { pickSession } from '../lib/session-picker.js';
 
 const MAX_RECONNECT_ATTEMPTS = 5;
 const RECONNECT_DELAY_MS = 2000;
 
 export const connectCommand = new Command('connect')
   .description('Reconnect to an existing session')
-  .argument('<label>', 'Session label (e.g., brave-tiger-1234)')
+  .argument('[label]', 'Session label (e.g., brave-tiger-1234)')
   .option('--no-auto-reconnect', 'Disable automatic reconnection on disconnect')
   .option('--no-sync-back', "Don't sync remote file changes back to local")
-  .action(async function (this: Command, label: string) {
+  .action(async function (this: Command, label?: string) {
     const opts = this.opts();
     const apiAddr = getAPIAddr(this.optsWithGlobals().api);
     const autoReconnect = opts.autoReconnect !== false;
@@ -23,12 +24,27 @@ export const connectCommand = new Command('connect')
     }
 
     const client = new APIClient(apiAddr);
+    let sessionLabel = label;
+
+    // If no label provided, show interactive session picker
+    if (!sessionLabel) {
+      const sessions = await client.listSessions();
+      const selected = await pickSession(sessions);
+
+      if (!selected) {
+        process.exit(0);
+      }
+
+      sessionLabel = selected.label;
+      console.log(''); // Add spacing after picker
+    }
+
     let reconnectAttempts = 0;
 
     while (true) {
       try {
-        console.log(`Looking up session ${label}...`);
-        const session = await client.getSession(label, true);
+        console.log(`Looking up session ${sessionLabel}...`);
+        const session = await client.getSession(sessionLabel, true);
 
         if (session.status === 'stopped') {
           throw new Error(`Session ${session.label} is stopped`);
@@ -74,7 +90,7 @@ export const connectCommand = new Command('connect')
           reconnectAttempts++;
           if (reconnectAttempts > MAX_RECONNECT_ATTEMPTS) {
             console.error(`\x1b[31m✗ Failed to reconnect after ${MAX_RECONNECT_ATTEMPTS} attempts\x1b[0m`);
-            console.error(`Run 'catty connect ${label}' to try again manually.`);
+            console.error(`Run 'catty connect ${sessionLabel}' to try again manually.`);
             process.exit(1);
           }
 
