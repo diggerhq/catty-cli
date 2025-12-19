@@ -1,0 +1,86 @@
+---
+title: "catty new"
+description: "Start a new remote Claude Code session"
+---
+
+Creates a new cloud machine, uploads your workspace, and connects your terminal to Claude Code.
+
+## Synopsis
+
+```bash
+catty new [options]
+```
+
+## Options
+
+| Option | Description |
+|--------|-------------|
+| `--no-upload` | Don't upload current directory |
+| `--no-sync-back` | Disable real-time sync of remote changes to local |
+| `--no-auto-reconnect` | Disable automatic reconnection on disconnect |
+| `--no-secrets` | Don't pass stored secrets to session |
+| `--enable-prompts` | Enable permission prompts (default: auto-approve all) |
+| `--agent <name>` | Agent to use: `claude` (default) or `codex` |
+| `--api <url>` | Override API URL |
+
+## What Happens
+
+1. Creates a new cloud machine
+2. Uploads current directory to `/workspace` (unless `--no-upload`)
+3. Passes your [secrets](/concepts/secrets) as environment variables (unless `--no-secrets`)
+4. Starts Claude Code with auto-approved permissions
+5. Connects your terminal via WebSocket
+6. Enables [sync-back](/concepts/sync-back) (unless `--no-sync-back`)
+7. Starts [cloud persistence](/concepts/workspaces#cloud-persistence) (saves every 30s)
+
+## Examples
+
+```bash
+# Standard session - uploads current directory
+catty new
+
+# Start without uploading workspace
+catty new --no-upload
+
+# Start without sync-back
+catty new --no-sync-back
+
+# Enable permission prompts (instead of auto-approving)
+catty new --enable-prompts
+
+# Start without passing secrets
+catty new --no-secrets
+
+# Combine options
+catty new --no-upload --no-sync-back
+```
+
+## Output
+
+```
+Creating session...
+Session created: brave-tiger-1234
+  Reconnect with: catty connect brave-tiger-1234
+  Sync-back: enabled (remote changes will sync to local)
+Secrets: GITHUB_TOKEN, GH_TOKEN
+Uploading workspace...
+Workspace uploaded (2.3 MB)
+Connecting...
+```
+
+## Exiting
+
+- Press `Ctrl+C` to disconnect (session keeps running)
+- Type `/exit` in Claude Code to end the session
+- Run `catty stop <label>` from another terminal
+
+<Tip>
+  After disconnecting, reconnect with `catty connect <label>`. The session persists until you explicitly stop it.
+</Tip>
+
+## See Also
+
+- [catty connect](/cli/connect) - Reconnect to a session
+- [catty stop](/cli/stop) - Stop a session
+- [Workspaces](/concepts/workspaces) - How workspace upload works
+- [Secrets](/concepts/secrets) - Managing secrets

@@ -1,0 +1,77 @@
+---
+title: "File Uploads"
+description: "Sharing images and documents with Claude during a session"
+---
+
+During an active session, you can upload images and documents for Claude to view and work with by dragging and dropping file paths into your terminal.
+
+## How It Works
+
+1. Drag a file from Finder/Explorer into your terminal
+2. The file path appears in the input
+3. Press Enter
+4. Catty detects the file and uploads it
+5. The file is available at `/workspace/.catty-uploads/<filename>`
+6. Claude can view and work with the file
+
+## Supported File Types
+
+<CardGroup cols={2}>
+  <Card title="Images" icon="image">
+    PNG, JPG, JPEG, GIF, WEBP, BMP, SVG
+  </Card>
+
+  <Card title="Documents" icon="file">
+    PDF, TXT, MD, JSON, XML, CSV
+  </Card>
+</CardGroup>
+
+## Limits
+
+| Limit | Value |
+|-------|-------|
+| Maximum file size | 10 MB |
+| Path type | Absolute paths only |
+
+## Examples
+
+```bash
+# Drag and drop a screenshot
+/Users/you/Desktop/Screenshot 2024-12-17.png
+
+# Upload a PDF for Claude to analyze
+/Users/you/Documents/report.pdf
+
+# Multiple files (space-separated)
+/path/to/image1.png /path/to/image2.png
+```
+
+<Tip>
+  Paths with spaces are automatically handled. Both `/path/to/my file.png` and `/path/to/my\ file.png` work.
+</Tip>
+
+## Where Files Land
+
+Uploaded files go to:
+
+```
+/workspace/.catty-uploads/<filename>
+```
+
+Claude can reference them there:
+
+```
+Claude, please analyze the image at /workspace/.catty-uploads/screenshot.png
+```
+
+## Use Cases
+
+- Share screenshots of bugs or UI issues
+- Upload PDFs for Claude to extract information
+- Provide reference images for design work
+- Share CSV data for analysis
+
+## See Also
+
+- [Workspaces](/concepts/workspaces) - Initial workspace upload
+- [Sessions](/concepts/sessions) - How sessions work

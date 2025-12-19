@@ -1,0 +1,38 @@
+---
+title: "catty update"
+description: "Update CLI to latest version"
+---
+
+Updates the Catty CLI to the latest version from npm.
+
+## Synopsis
+
+```bash
+catty update
+```
+
+## What Happens
+
+1. Checks npm for latest version
+2. Compares with installed version
+3. Prompts to confirm update
+4. Runs `npm install -g @diggerhq/catty`
+
+## Auto-Update Prompts
+
+Catty automatically checks for updates after each command. If a new version is available:
+
+- You'll see a prompt to update
+- If you decline, it won't ask again for 2 days
+
+## Manual Update
+
+You can also update directly with npm:
+
+```bash
+npm install -g @diggerhq/catty
+```
+
+## See Also
+
+- [catty version](/cli/version) - Check current version

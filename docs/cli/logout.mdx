@@ -1,0 +1,24 @@
+---
+title: "catty logout"
+description: "Remove stored credentials"
+---
+
+Deletes your locally stored credentials.
+
+## Synopsis
+
+```bash
+catty logout
+```
+
+## What Happens
+
+Deletes `~/.catty/credentials.json`. You'll need to run `catty login` to authenticate again.
+
+<Note>
+  This only removes local credentials. It doesn't invalidate tokens on the server or affect running sessions.
+</Note>
+
+## See Also
+
+- [catty login](/cli/login) - Authenticate again

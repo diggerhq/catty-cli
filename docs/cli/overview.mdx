@@ -1,0 +1,109 @@
+---
+title: "CLI Overview"
+description: "Quick reference for all Catty CLI commands"
+---
+
+The `catty` command-line interface lets you create, manage, and connect to remote Claude Code sessions.
+
+## Installation
+
+```bash
+npm install -g @diggerhq/catty
+```
+
+Or use without installing:
+
+```bash
+npx @diggerhq/catty new
+```
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| [catty new](/cli/new) | Start a new session |
+| [catty connect](/cli/connect) | Reconnect to an existing session |
+| [catty list](/cli/list) | List all your sessions |
+| [catty stop](/cli/stop) | Stop a session |
+| [catty download](/cli/download) | Download workspace from a session |
+| [catty sync](/cli/sync) | Sync remote workspace to current directory |
+| [catty secrets](/cli/secrets) | Manage secrets for sessions |
+| [catty login](/cli/login) | Authenticate with Catty |
+| [catty logout](/cli/logout) | Remove stored credentials |
+| [catty update](/cli/update) | Update CLI to latest version |
+| [catty version](/cli/version) | Print version number |
+
+## Common Workflows
+
+### Start a new session
+
+```bash
+cd my-project
+catty new
+```
+
+### Reconnect after disconnect
+
+```bash
+catty list                      # Find your session
+catty connect brave-tiger-1234  # Reconnect
+```
+
+### Download work after session ends
+
+```bash
+catty download brave-tiger-1234
+```
+
+### Set up GitHub access
+
+```bash
+catty secrets add github        # One-time setup
+catty new                       # Sessions now have GitHub access
+```
+
+## Global Options
+
+| Option | Description |
+|--------|-------------|
+| `--api <url>` | Override API URL (for development) |
+| `-h, --help` | Show help |
+| `-V, --version` | Show version |
+
+## Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `CATTY_API_ADDR` | Override API URL | `https://api.catty.dev` |
+| `CATTY_DEBUG` | Enable debug logging | - |
+
+## Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | Success |
+| 1 | General error |
+| 2 | Authentication required |
+
+## Platform Support
+
+| Platform | Architecture |
+|----------|--------------|
+| macOS | Intel (x64), Apple Silicon (arm64) |
+| Linux | x64, ARM64 |
+
+<Note>
+  Windows is not yet supported.
+</Note>
+
+## Authentication
+
+All commands except `login`, `logout`, and `version` require authentication. Credentials are stored at `~/.catty/credentials.json` and automatically refreshed when expired.
+
+```bash
+# First-time setup
+catty login
+
+# Check if logged in
+cat ~/.catty/credentials.json
+```
