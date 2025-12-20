@@ -30,6 +30,27 @@ export const connectCommand = new Command('connect')
         console.log(`Looking up session ${label}...`);
         const session = await client.getSession(label, true);
 
+        // Handle timed_out sessions - show logs and exit with helpful message
+        if (session.status === 'timed_out') {
+          console.log(`\n\x1b[33m⏰ Session ${session.label} has timed out due to inactivity.\x1b[0m\n`);
+
+          // Try to fetch and display saved logs
+          const logs = await client.getSessionLogs(label);
+          if (logs && logs.length > 0) {
+            console.log('\x1b[36m--- Last session output ---\x1b[0m\n');
+            process.stdout.write(logs);
+            console.log('\n\x1b[36m--- End of session output ---\x1b[0m\n');
+          } else {
+            console.log('No saved logs available for this session.\n');
+          }
+
+          console.log('To download the workspace files, run:');
+          console.log(`  \x1b[1mcatty sync ${session.label}\x1b[0m\n`);
+          console.log('To start a new session, run:');
+          console.log('  \x1b[1mcatty new\x1b[0m\n');
+          process.exit(0);
+        }
+
         if (session.status === 'stopped') {
           throw new Error(`Session ${session.label} is stopped`);
         }
