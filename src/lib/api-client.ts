@@ -199,4 +199,22 @@ export class APIClient {
       response
     );
   }
+
+  async getSessionLogs(idOrLabel: string): Promise<Buffer | null> {
+    const response = await this.doRequestWithRefresh(
+      'GET',
+      `/v1/sessions/${idOrLabel}/logs`
+    );
+
+    if (response.status === 404) {
+      return null;
+    }
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    return Buffer.from(arrayBuffer);
+  }
 }
