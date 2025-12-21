@@ -51,7 +51,7 @@ export const connectCommand = new Command('connect')
           console.log(`\n\x1b[33m⏰ Session ${session.label} has timed out due to inactivity.\x1b[0m\n`);
 
           // Try to fetch and display saved logs
-          const logs = await client.getSessionLogs(label);
+          const logs = await client.getSessionLogs(sessionLabel);
           if (logs && logs.length > 0) {
             console.log('\x1b[36m--- Last session output ---\x1b[0m\n');
             process.stdout.write(logs);
