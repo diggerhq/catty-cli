@@ -28,7 +28,6 @@ Your entire current directory, **except**:
 Always excluded, regardless of `.gitignore`:
 
 ```
-.git/
 node_modules/
 __pycache__/
 *.pyc
@@ -42,6 +41,14 @@ venv/
 <Tip>
   Add patterns to your `.gitignore` to exclude additional files.
 </Tip>
+
+### Git Directory
+
+The `.git` directory is uploaded by default, enabling git operations in your session. To exclude it:
+
+```bash
+catty new --no-git
+```
 
 ### Upload Limits
 
