@@ -5,8 +5,6 @@ import { join, relative } from 'path';
 import { MAX_UPLOAD_SIZE } from './config.js';
 
 const DEFAULT_IGNORES = [
-  '.git',
-  '.git/**',
   'node_modules',
   'node_modules/**',
   '__pycache__',
@@ -21,8 +19,17 @@ const DEFAULT_IGNORES = [
   '*.log',
 ];
 
-export async function createWorkspaceZip(dir: string): Promise<Buffer> {
+export interface WorkspaceOptions {
+  excludeGit?: boolean;
+}
+
+export async function createWorkspaceZip(dir: string, options: WorkspaceOptions = {}): Promise<Buffer> {
   const ig = ignore().add(DEFAULT_IGNORES);
+
+  // Optionally exclude .git
+  if (options.excludeGit) {
+    ig.add(['.git', '.git/**']);
+  }
 
   // Load .gitignore if exists
   try {
@@ -90,10 +97,11 @@ function walkDir(
 export async function uploadWorkspace(
   uploadURL: string,
   token: string,
-  machineID: string
+  machineID: string,
+  options: WorkspaceOptions = {}
 ): Promise<void> {
   const cwd = process.cwd();
-  const zipData = await createWorkspaceZip(cwd);
+  const zipData = await createWorkspaceZip(cwd, options);
 
   if (zipData.length > MAX_UPLOAD_SIZE) {
     throw new Error(

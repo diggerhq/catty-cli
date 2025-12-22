@@ -14,6 +14,7 @@ export const newCommand = new Command('new')
   .description('Start a new remote agent session')
   .option('--agent <name>', 'Agent to use: claude or codex', 'claude')
   .option('--no-upload', "Don't upload current directory")
+  .option('--no-git', "Don't upload .git directory")
   .option('--no-auto-reconnect', 'Disable automatic reconnection on disconnect')
   .option('--no-secrets', "Don't pass stored secrets to session")
   .option('--no-sync-back', "Don't sync remote file changes back to local")
@@ -99,7 +100,8 @@ export const newCommand = new Command('new')
       await uploadWorkspace(
         uploadURL,
         session.connect_token,
-        session.headers['fly-force-instance-id']
+        session.headers['fly-force-instance-id'],
+        { excludeGit: opts.git === false }
       );
       console.log('Workspace uploaded.');
     }
