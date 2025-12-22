@@ -13,8 +13,12 @@ catty-cli/
 │   │   ├── connect.ts        # catty connect - reconnect to session
 │   │   ├── list.ts           # catty list - show sessions
 │   │   ├── stop.ts           # catty stop - stop session
+│   │   ├── stopall.ts        # catty stopall - stop all sessions
 │   │   ├── login.ts          # catty login - device auth flow
 │   │   ├── logout.ts         # catty logout - remove credentials
+│   │   ├── secrets.ts        # catty secrets - manage session secrets
+│   │   ├── sync.ts           # catty sync - manual workspace sync
+│   │   ├── download.ts       # catty download - download workspace
 │   │   ├── update.ts         # catty update - self-update
 │   │   └── version.ts        # catty version
 │   ├── lib/
@@ -25,6 +29,7 @@ catty-cli/
 │   │   ├── websocket.ts      # WebSocket connection + PTY streaming
 │   │   ├── workspace.ts      # Zip creation + upload
 │   │   ├── syncback.ts       # Apply remote file changes locally
+│   │   ├── secrets.ts        # Local secrets file management (~/.catty/secrets.json)
 │   │   ├── file-upload.ts    # Image/document upload via drag-drop
 │   │   └── version-checker.ts # Auto-update checking
 │   ├── protocol/
@@ -58,6 +63,15 @@ npm run build     # Compile with tsup
 ## Credentials
 
 Stored at `~/.catty/credentials.json` with 0600 permissions. Contains access token, refresh token, user ID, and email.
+
+## Secrets
+
+Stored at `~/.catty/secrets.json` with 0600 permissions. Key-value pairs injected as environment variables in sessions.
+
+Commands:
+- `catty secrets set KEY=value` - Add/update a secret
+- `catty secrets list` - List secrets (values masked)
+- `catty secrets delete KEY` - Remove a secret
 
 ## Environment Variables
 
