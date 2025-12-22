@@ -16,6 +16,7 @@ catty new [options]
 | Option | Description |
 |--------|-------------|
 | `--no-upload` | Don't upload current directory |
+| `--no-git` | Don't upload `.git` directory |
 | `--no-sync-back` | Disable real-time sync of remote changes to local |
 | `--no-auto-reconnect` | Disable automatic reconnection on disconnect |
 | `--no-secrets` | Don't pass stored secrets to session |
@@ -50,6 +51,9 @@ catty new --enable-prompts
 
 # Start without passing secrets
 catty new --no-secrets
+
+# Start without uploading .git directory
+catty new --no-git
 
 # Combine options
 catty new --no-upload --no-sync-back
