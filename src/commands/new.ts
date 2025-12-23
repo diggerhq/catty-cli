@@ -1,5 +1,4 @@
 import { Command } from 'commander';
-import open from 'open';
 import { getAPIAddr, sleep } from '../lib/config.js';
 import { isLoggedIn } from '../lib/auth.js';
 import { APIClient, APIError } from '../lib/api-client.js';
@@ -80,7 +79,7 @@ export const newCommand = new Command('new')
       });
     } catch (err) {
       if (err instanceof APIError && err.isQuotaExceeded()) {
-        await handleQuotaExceeded(client);
+        await handleQuotaExceeded(err, client);
         return;
       }
       throw err;
@@ -175,20 +174,19 @@ export const newCommand = new Command('new')
     }
   });
 
-async function handleQuotaExceeded(client: APIClient): Promise<void> {
+async function handleQuotaExceeded(error: APIError, client: APIClient): Promise<void> {
   console.error('');
   console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.error('  Free tier quota exceeded (1M tokens/month)');
-  console.error('  Upgrade to Pro for unlimited usage.');
+  console.error(`  ${error.message}`);
   console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.error('');
 
   try {
     const checkoutURL = await client.createCheckoutSession();
-    console.error('Opening upgrade page in your browser...');
-    await open(checkoutURL);
+    console.error(`  Upgrade: ${checkoutURL}`);
   } catch (err) {
-    console.error(`Failed to create checkout session: ${err}`);
-    console.error('Please visit https://catty.dev to upgrade.');
+    console.error(`  Failed to get upgrade URL: ${err instanceof Error ? err.message : String(err)}`);
+    console.error('  Please visit https://catty.dev to upgrade');
   }
+  console.error('');
 }

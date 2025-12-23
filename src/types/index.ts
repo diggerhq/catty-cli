@@ -84,6 +84,7 @@ export interface TokenResponse {
 
 export interface APIErrorResponse {
   error: string;
+  message?: string;
   code?: string;
   upgrade_url?: string;
 }
