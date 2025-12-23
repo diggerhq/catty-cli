@@ -134,8 +134,8 @@ export class APIClient {
 
       throw new APIError(
         response.status,
-        errorData.code || '',
-        errorData.error || response.statusText,
+        errorData.error || '',
+        errorData.message || errorData.error || response.statusText,
         errorData.upgrade_url
       );
     }
@@ -176,16 +176,17 @@ export class APIClient {
       }
       throw new APIError(
         response.status,
-        errorData.code || '',
-        errorData.error || response.statusText
+        errorData.error || '',
+        errorData.message || errorData.error || response.statusText,
+        errorData.upgrade_url
       );
     }
   }
 
   async createCheckoutSession(): Promise<string> {
-    const response = await this.doRequestWithRefresh('POST', '/v1/checkout');
-    const data = await this.handleResponse<{ url: string }>(response);
-    return data.url;
+    const response = await this.doRequestWithRefresh('POST', '/v1/billing/checkout');
+    const data = await this.handleResponse<{ checkout_url: string }>(response);
+    return data.checkout_url;
   }
 
   async getSessionDownload(
