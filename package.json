@@ -1,6 +1,6 @@
 {
   "name": "@diggerhq/catty",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "description": "Catty - Remote AI agent sessions",
   "type": "module",
   "main": "dist/index.js",
