@@ -74,3 +74,27 @@ export function getRefreshToken(): string | null {
   const creds = loadCredentials();
   return creds?.refresh_token || null;
 }
+
+// Extract session ID from JWT token (from 'sid' claim)
+export function getSessionId(): string | null {
+  const token = getAccessToken();
+  if (!token) return null;
+
+  try {
+    // JWT format: header.payload.signature
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+
+    // Decode the payload (base64url encoded)
+    const payload = parts[1];
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = Buffer.from(base64, 'base64').toString('utf-8');
+
+    const decoded = JSON.parse(jsonPayload);
+    const sid = decoded.sid || null;
+    return sid;
+  } catch (err) {
+    console.error('Failed to extract session ID from token:', err);
+    return null;
+  }
+}
