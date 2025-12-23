@@ -5,6 +5,7 @@ import {
 import {
   getAccessToken,
   getRefreshToken,
+  getSessionId,
   loadCredentials,
   saveCredentials,
 } from './auth.js';
@@ -217,5 +218,13 @@ export class APIClient {
 
     const arrayBuffer = await response.arrayBuffer();
     return Buffer.from(arrayBuffer);
+  }
+
+  async logout(): Promise<{ logout_url: string }> {
+    // Extract session ID from access token to send to backend
+    const sessionId = getSessionId();
+    const body = sessionId ? { session_id: sessionId } : {};
+    const response = await this.doRequestWithRefresh('POST', '/v1/auth/logout', body);
+    return this.handleResponse<{ message: string; logout_url: string }>(response);
   }
 }
