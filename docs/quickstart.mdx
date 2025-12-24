@@ -1,67 +1,65 @@
 ---
 title: "Quickstart"
-description: "Get up and running with Catty in under 2 minutes"
+description: "Create your first session in under 2 minutes"
 ---
 
-Get started with Catty in three simple steps.
+## Install the CLI
 
-## Prerequisites
+```bash
+npm install -g @diggerhq/catty
+```
 
-- Node.js 18 or later
-- npm or npx
+Or use npx without installing:
 
-## Getting Started
+```bash
+npx @diggerhq/catty new
+```
+
+## Create a Session
 
 <Steps>
-  <Step title="Install">
-    Install the CLI globally via npm:
-    ```bash
-    npm install -g @diggerhq/catty
-    ```
-    Or use npx without installing:
-    ```bash
-    npx @diggerhq/catty new
-    ```
-  </Step>
-
   <Step title="Login">
-    Authenticate with Catty (one-time setup):
+    Authenticate with Catty (one-time):
     ```bash
     catty login
     ```
-    This opens your browser for authentication. Once complete, your credentials are stored locally.
   </Step>
 
   <Step title="Start a Session">
-    Navigate to your project directory and start a new session:
+    Navigate to your project and start a session:
     ```bash
     cd my-project
     catty new
     ```
-    This creates a cloud machine, uploads your directory, and connects you to Claude Code.
+    This uploads your directory and connects you to Claude Code.
   </Step>
 </Steps>
 
-You're now connected to Claude Code running in the cloud. Work with it just like you would locally - all changes sync back to your local directory in real-time.
+You're now connected. Work with Claude Code just like you would locally - file changes sync back in real-time.
 
-## Reconnecting to Sessions
+## Connect From Your Phone
 
-Sessions persist until stopped. Reconnect using the session label:
+Your session is running in the cloud. Open [app.catty.dev](https://app.catty.dev) on your phone to:
 
+- See all your sessions on one dashboard
+- Connect and interact using Chat Mode
+- Answer prompts with quick action buttons
+
+Close your laptop and check in from anywhere. Start multiple sessions for different projects - manage them all from your phone.
+
+## CLI Basics
+
+Reconnect to a session:
 ```bash
 catty connect brave-tiger-1234
 ```
 
 List your sessions:
-
 ```bash
 catty list
 ```
 
-## Downloading Your Work
-
-Workspaces are automatically saved to the cloud. Download anytime:
-
+Download your workspace:
 ```bash
 catty download brave-tiger-1234
 ```
@@ -69,12 +67,12 @@ catty download brave-tiger-1234
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Sessions" icon="layer-group" href="/concepts/sessions">
-    Learn about session lifecycle
+  <Card title="Mobile & Web" icon="mobile" href="/web/overview">
+    Check in from your phone
   </Card>
 
-  <Card title="Workspaces" icon="folder" href="/concepts/workspaces">
-    Understand file synchronization
+  <Card title="Sessions" icon="layer-group" href="/concepts/sessions">
+    Session lifecycle and persistence
   </Card>
 
   <Card title="GitHub Integration" icon="github" href="/concepts/github">

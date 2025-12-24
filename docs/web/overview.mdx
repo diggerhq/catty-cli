@@ -1,0 +1,65 @@
+---
+title: "Overview"
+description: "Run Claude Code sessions from your phone"
+---
+
+The Catty web app at [app.catty.dev](https://app.catty.dev) brings Claude Code to your phone. Start sessions from your laptop with the CLI, then monitor and interact with them from anywhere.
+
+## Why Mobile?
+
+<CardGroup cols={2}>
+  <Card title="Work From Anywhere" icon="mobile">
+    Check on sessions from your phone while away from your desk
+  </Card>
+
+  <Card title="Run Many in Parallel" icon="layer-group">
+    Start multiple sessions and switch between them from one dashboard
+  </Card>
+
+  <Card title="Quick Interactions" icon="message">
+    Answer yes/no prompts with one tap using quick action buttons
+  </Card>
+
+  <Card title="Monitor Long Tasks" icon="eye">
+    Let Claude work while you're out - check progress from your phone
+  </Card>
+</CardGroup>
+
+## Two View Modes
+
+| Mode | Best For | Key Features |
+|------|----------|--------------|
+| [Chat Mode](/web/chat-mode) | Phones | Clean bubbles, quick action buttons (`y`, `n`, `Enter`, `Esc`) |
+| [Terminal Mode](/web/terminal-mode) | Tablets, desktops | Full xterm.js with colors, scrollback, all shortcuts |
+
+Tap the toggle in the header to switch. Both connect to the same session.
+
+## Virtual Keyboard
+
+On mobile, a virtual keyboard provides terminal-specific keys:
+
+| Keys | Purpose |
+|------|---------|
+| ESC, TAB | Navigation |
+| ^C, ^D, ^Z, ^L | Control signals |
+| ↑ ↓ ← → | Arrow keys |
+| Backspace, Enter | Editing |
+
+Tap the keyboard icon to show/hide. Use your device keyboard for regular text input.
+
+## CLI vs Mobile
+
+| Capability | CLI | Mobile |
+|------------|-----|--------|
+| Create sessions | Yes | Yes |
+| Upload workspace | Yes | No |
+| File sync-back | Yes | No |
+| Connect from phone | No | Yes |
+
+**Typical workflow:** Create sessions with `catty new` from the CLI to upload your code, then monitor and interact from your phone.
+
+## Get Started
+
+<Card title="Getting Started" icon="rocket" href="/web/getting-started">
+  Connect to your first session in 30 seconds
+</Card>

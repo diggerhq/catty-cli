@@ -61,6 +61,16 @@
       ]
     },
     {
+      "group": "Mobile & Web",
+      "pages": [
+        "web/overview",
+        "web/getting-started",
+        "web/sessions",
+        "web/chat-mode",
+        "web/terminal-mode"
+      ]
+    },
+    {
       "group": "CLI Reference",
       "pages": [
         "cli/overview",

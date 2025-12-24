@@ -1,0 +1,67 @@
+---
+title: "Managing Sessions"
+description: "Create, monitor, and control sessions from the web"
+---
+
+The sessions dashboard at [app.catty.dev](https://app.catty.dev) shows all your Claude Code sessions and lets you manage them from anywhere.
+
+## Sessions Dashboard
+
+**Running sessions** appear at the top with a green indicator. Tap to connect.
+
+**Stopped sessions** appear below with a gray indicator. These can't be reconnected, but their workspace snapshots remain available for download via CLI.
+
+Each session shows:
+- **Label** - Human-readable name (e.g., `brave-tiger-1234`)
+- **Region** - Where it's running (e.g., "US East")
+- **Created** - When it started (e.g., "2h ago")
+
+The dashboard auto-refreshes every 30 seconds. Tap the refresh button to update manually.
+
+## Running Multiple Sessions
+
+Run as many sessions as you need in parallel - different projects, different tasks. The dashboard shows them all in one place, making it easy to switch between them from your phone.
+
+Common patterns:
+- One session per project you're actively working on
+- Long-running tasks you check periodically
+- Experiments you want to compare side-by-side
+
+## Creating a Session
+
+Tap **+ New Session** to create a session from the web:
+
+1. **Select region** - Choose closest to you for best latency
+2. **Select duration** - How long before auto-stop (1-8 hours)
+3. **Create** - You'll connect automatically when ready
+
+<Note>
+Web-created sessions start with an empty workspace. To upload local files, create sessions with `catty new` from the CLI instead.
+</Note>
+
+**Available regions:**
+- US East (Virginia), US West (San Jose)
+- Europe (London, Frankfurt)
+- Asia Pacific (Sydney, Tokyo)
+
+## Stopping a Session
+
+Tap the red **Stop** button on any running session. Stopped sessions:
+- Can't be reconnected
+- Keep their workspace snapshot in cloud storage
+- Can be downloaded via CLI with `catty download <label>`
+
+## Connection Status
+
+When connected to a session, the status bar shows:
+
+| Status | Meaning |
+|--------|---------|
+| **Connected** (green) | Active connection |
+| **Connecting** (amber) | Establishing connection |
+| **Disconnected** (red) | Connection lost |
+
+If disconnected, tap **Retry** to reconnect. Common disconnect reasons:
+- Network interruption
+- Session was stopped
+- Connected from another device (replaces previous connection)

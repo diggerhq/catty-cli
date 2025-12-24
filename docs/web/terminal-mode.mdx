@@ -1,0 +1,96 @@
+---
+title: "Terminal Mode"
+description: "Full terminal emulator in your browser"
+---
+
+Terminal Mode provides a complete terminal experience using [xterm.js](https://xtermjs.org/), the same technology powering VS Code's integrated terminal.
+
+## Features
+
+- **Full ANSI color support** - See Claude's colorized output exactly as intended
+- **WebGL acceleration** - Smooth rendering even with heavy output
+- **Clickable links** - URLs in terminal output are clickable
+- **10,000 line scrollback** - Scroll back through session history
+- **Automatic resize** - Terminal adapts to window and orientation changes
+
+## Using Terminal Mode
+
+Terminal Mode works just like a native terminal:
+
+- Type commands and messages directly
+- Use arrow keys to navigate command history
+- Scroll to view previous output
+- Copy text by selecting it (browser copy)
+
+On mobile, tap the terminal to bring up your device keyboard. Use the virtual keyboard for special keys like Ctrl+C and arrow keys.
+
+## Keyboard Shortcuts
+
+All standard terminal shortcuts work:
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+C` | Interrupt current operation |
+| `Ctrl+D` | Send EOF (end of input) |
+| `Ctrl+Z` | Suspend process |
+| `Ctrl+L` | Clear screen |
+| `Ctrl+A` | Move cursor to start of line |
+| `Ctrl+E` | Move cursor to end of line |
+| `↑` / `↓` | Navigate command history |
+| `Tab` | Autocomplete |
+
+## Connection Status
+
+The status bar at the bottom shows connection state:
+
+- **Connected** (green) - Active WebSocket connection
+- **Connecting** (amber, pulsing) - Establishing connection
+- **Disconnected** (red) - Connection lost
+
+If disconnected, the terminal displays the reason:
+- "Connection replaced by another client" - You connected from another browser/tab
+- "Connection timeout" - No data received for 75 seconds
+- "Process exited with code X" - Claude Code process ended
+
+## Switching to Chat Mode
+
+Tap the chat icon in the header to switch to [Chat Mode](/web/chat-mode). Both modes connect to the same session - switching doesn't interrupt your work.
+
+## Visual Theme
+
+Terminal Mode uses a dark theme optimized for readability:
+
+```
+Background:  #0a0a0f (near black)
+Foreground:  #e8e8f0 (soft white)
+Cursor:      #00ff88 (green)
+```
+
+The color palette supports full ANSI 256 colors for syntax highlighting and styled output.
+
+## Performance
+
+Terminal Mode is optimized for performance:
+
+- **WebGL rendering** - GPU-accelerated when available, falls back to canvas
+- **Efficient updates** - Only redraws changed regions
+- **Scrollback limit** - 10,000 lines prevents memory issues
+- **Binary protocol** - Raw PTY data for minimal latency
+
+## Troubleshooting
+
+**Terminal appears blank**
+
+Wait a few seconds for the connection to establish. If it stays blank, check the status bar for connection errors.
+
+**Input not working**
+
+Tap/click the terminal to ensure it has focus. On mobile, this should bring up the keyboard.
+
+**Garbled output**
+
+Try refreshing the page. Some terminal applications may not render correctly if you connected mid-output.
+
+**Slow or laggy**
+
+WebGL may not be available. Check browser console for WebGL errors. Try a different browser or device.
