@@ -2,6 +2,12 @@
 
 TypeScript CLI for Catty. Runs Claude Code sessions in the cloud, streams PTY to local terminal.
 
+**Commits:** One-liners only. Example: `Fix upload timeout in workspace sync`
+
+**Time estimates:** Never include them. Focus on what, not when.
+
+---
+
 ## Project Structure
 
 ```
@@ -78,6 +84,6 @@ Commands:
 - `CATTY_API_ADDR` - Override API URL (default: https://api.catty.dev)
 - `CATTY_DEBUG` - Enable debug logging
 
-## Commits
+## Workspace Upload
 
-One-liners only. Example: `Fix upload timeout in workspace sync`
+Files are zipped using `.gitignore` rules (via `ignore` library). Max upload size: 100MB.
