@@ -1,0 +1,37 @@
+---
+title: "Chat Mode"
+description: "Mobile-friendly chat interface for Claude"
+---
+
+Chat Mode presents Claude's responses as clean chat bubbles, filtering out terminal noise. Best for phones and quick interactions.
+
+## Quick Action Buttons
+
+One-tap buttons for common inputs:
+
+| Button | Use For |
+|--------|---------|
+| `y` / `n` | Yes/no confirmations |
+| `1` / `2` | Menu selections |
+| `↑` / `↓` | Command history |
+| `Enter` | Confirm |
+| `Esc` | Cancel |
+| `^C` | Interrupt |
+
+## Sending Messages
+
+Type in the input field and tap **Send**. Messages go directly to the terminal. The input preserves exact text (no autocorrect).
+
+## What Gets Filtered
+
+Chat Mode strips terminal formatting for readability:
+- ANSI color codes
+- Box drawing characters
+- Progress bars and spinners
+- System prompts and hints
+
+If you need to see raw output, switch to [Terminal Mode](/web/terminal-mode).
+
+## Switching Modes
+
+Tap **Terminal** in the header. Both modes connect to the same session - switching doesn't interrupt your work.
