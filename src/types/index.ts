@@ -12,6 +12,7 @@ export interface CreateSessionRequest {
   region: string;
   ttl_sec: number;
   secrets?: Record<string, string>;
+  label?: string; // Custom session label (optional)
 }
 
 export interface CreateSessionResponse {

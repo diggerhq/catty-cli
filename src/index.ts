@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import { program } from 'commander';
 import { newCommand } from './commands/new.js';
+import { remoteCommand } from './commands/remote.js';
+import { pushCommand } from './commands/push.js';
 import { connectCommand } from './commands/connect.js';
 import { listCommand } from './commands/list.js';
 import { stopCommand } from './commands/stop.js';
@@ -12,6 +14,7 @@ import { updateCommand } from './commands/update.js';
 import { secretsCommand } from './commands/secrets.js';
 import { downloadCommand } from './commands/download.js';
 import { syncCommand } from './commands/sync.js';
+import { localCommand } from './commands/local.js';
 import {
   checkForUpdate,
   printUpdateAvailable,
@@ -31,6 +34,8 @@ program
   .version(version);
 
 program.addCommand(newCommand);
+program.addCommand(remoteCommand);
+program.addCommand(pushCommand);
 program.addCommand(connectCommand);
 program.addCommand(listCommand);
 program.addCommand(stopCommand);
@@ -42,6 +47,7 @@ program.addCommand(updateCommand);
 program.addCommand(secretsCommand);
 program.addCommand(downloadCommand);
 program.addCommand(syncCommand);
+program.addCommand(localCommand);
 
 // Handle errors gracefully
 program.exitOverride();

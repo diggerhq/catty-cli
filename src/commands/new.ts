@@ -1,192 +1,335 @@
-import { Command } from 'commander';
-import { getAPIAddr, sleep } from '../lib/config.js';
-import { isLoggedIn } from '../lib/auth.js';
-import { APIClient, APIError } from '../lib/api-client.js';
-import { connectToSession, type ConnectionResult } from '../lib/websocket.js';
-import { uploadWorkspace, buildUploadURL } from '../lib/workspace.js';
-import { getAllSecrets, listSecretNames } from '../lib/secrets.js';
+// catty new - Creates a LOCAL session (the default!)
+// For cloud sessions, use: catty remote
 
-const MAX_RECONNECT_ATTEMPTS = 5;
-const RECONNECT_DELAY_MS = 2000;
+import { Command } from 'commander';
+import { spawn } from 'child_process';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as net from 'net';
+import { isLoggedIn } from '../lib/auth.js';
+import { getApiAddr, getCattyDir } from '../lib/config.js';
+import { Terminal } from '../lib/terminal.js';
+
+const SOCKET_NAME = 'catty-local.sock';
+const BINARY_NAME = process.platform === 'win32' ? 'catty-local.exe' : 'catty-local';
+
+function getSocketPath(): string {
+  return path.join(getCattyDir(), SOCKET_NAME);
+}
+
+function getBinaryPath(): string {
+  return path.join(getCattyDir(), 'bin', BINARY_NAME);
+}
+
+async function isDaemonRunning(): Promise<boolean> {
+  const socketPath = getSocketPath();
+  return new Promise((resolve) => {
+    const client = net.createConnection(socketPath, () => {
+      client.end();
+      resolve(true);
+    });
+    client.on('error', () => resolve(false));
+  });
+}
+
+async function ensureDaemon(): Promise<void> {
+  if (await isDaemonRunning()) {
+    return;
+  }
+
+  const binaryPath = getBinaryPath();
+  if (!fs.existsSync(binaryPath)) {
+    // Check development path
+    const devBinary = path.join(process.cwd(), '../catty-local/bin/catty-local');
+    if (fs.existsSync(devBinary)) {
+      const binDir = path.dirname(binaryPath);
+      fs.mkdirSync(binDir, { recursive: true });
+      fs.copyFileSync(devBinary, binaryPath);
+      fs.chmodSync(binaryPath, 0o755);
+    } else {
+      console.error('❌ catty-local binary not found.');
+      console.error('');
+      console.error('Build it with:');
+      console.error('  cd catty-local && make build');
+      console.error('  mkdir -p ~/.catty/bin && cp bin/catty-local ~/.catty/bin/');
+      process.exit(1);
+    }
+  }
+
+  const apiAddr = getApiAddr();
+  console.log('🐱 Starting local daemon...');
+
+  const child = spawn(binaryPath, ['daemon', '--api', apiAddr], {
+    detached: true,
+    stdio: 'ignore',
+  });
+  child.unref();
+
+  // Wait for daemon to be ready
+  for (let i = 0; i < 30; i++) {
+    await new Promise(r => setTimeout(r, 200));
+    if (await isDaemonRunning()) {
+      return;
+    }
+  }
+
+  console.error('❌ Failed to start daemon');
+  process.exit(1);
+}
+
+interface LocalResponse {
+  success: boolean;
+  error?: string;
+  sessions?: SessionInfo[];
+}
+
+interface SessionInfo {
+  name: string;
+  status: string;
+}
+
+async function sendCommand(cmd: object): Promise<LocalResponse> {
+  const socketPath = getSocketPath();
+
+  return new Promise((resolve, reject) => {
+    const client = net.createConnection(socketPath, () => {
+      client.write(JSON.stringify(cmd) + '\n');
+    });
+
+    let data = '';
+    let resolved = false;
+
+    client.on('data', (chunk) => {
+      data += chunk.toString();
+      // Try to parse as complete JSON
+      try {
+        const response = JSON.parse(data);
+        resolved = true;
+        client.end();
+        resolve(response);
+      } catch {
+        // Not complete JSON yet, wait for more data
+      }
+    });
+
+    client.on('error', (err) => {
+      if (!resolved) {
+        reject(new Error(`Cannot connect to daemon: ${err.message}`));
+      }
+    });
+
+    setTimeout(() => {
+      if (!resolved) {
+        client.destroy();
+        reject(new Error('Daemon connection timeout'));
+      }
+    }, 5000);
+  });
+}
+
+function generateSessionName(): string {
+  // Use current directory name as default session name
+  const cwd = process.cwd();
+  const dirName = path.basename(cwd).toLowerCase().replace(/[^a-z0-9-]/g, '-');
+  return dirName || 'session';
+}
 
 export const newCommand = new Command('new')
-  .description('Start a new remote agent session')
-  .option('--agent <name>', 'Agent to use: claude or codex', 'claude')
-  .option('--no-upload', "Don't upload current directory")
-  .option('--no-git', "Don't upload .git directory")
-  .option('--no-auto-reconnect', 'Disable automatic reconnection on disconnect')
-  .option('--no-secrets', "Don't pass stored secrets to session")
-  .option('--no-sync-back', "Don't sync remote file changes back to local")
-  .option(
-    '--enable-prompts',
-    'Enable permission prompts (by default, all permissions are auto-approved)',
-    false
-  )
-  .action(async function (this: Command) {
+  .description('Start a new local Claude session')
+  .argument('[name]', 'Session name (default: current directory name)')
+  .option('--workdir <dir>', 'Working directory', process.cwd())
+  .action(async function (this: Command, name?: string) {
     const opts = this.opts();
-    const apiAddr = getAPIAddr(this.optsWithGlobals().api);
-    const autoReconnect = opts.autoReconnect !== false;
 
     if (!isLoggedIn()) {
       console.error("Not logged in. Please run 'catty login' first.");
       process.exit(1);
     }
 
-    const client = new APIClient(apiAddr);
+    // Generate session name if not provided
+    const sessionName = name || generateSessionName();
 
-    console.log('Creating session...');
+    // Ensure daemon is running
+    await ensureDaemon();
 
-    // Determine command arguments based on agent and prompts setting
-    let cmdArgs: string[];
-    switch (opts.agent) {
-      case 'claude':
-        if (opts.enablePrompts) {
-          // User wants prompts - don't skip permissions
-          cmdArgs = ['claude-wrapper'];
-        } else {
-          // Default: auto-approve all permissions
-          cmdArgs = ['claude-wrapper', '--dangerously-skip-permissions'];
-        }
-        break;
-      case 'codex':
-        cmdArgs = ['codex'];
-        break;
-      default:
-        console.error(
-          `Unknown agent: ${opts.agent} (must be 'claude' or 'codex')`
-        );
-        process.exit(1);
-    }
-
-    // Gather secrets to pass to session
-    let secrets: Record<string, string> | undefined;
-    if (opts.secrets !== false) {
-      secrets = getAllSecrets();
-      const secretNames = listSecretNames();
-      if (secretNames.length > 0) {
-        console.log(`Secrets: ${secretNames.join(', ')}`);
-      }
-    }
-
-    let session;
+    // Check if session already exists
     try {
-      session = await client.createSession({
-        agent: opts.agent,
-        cmd: cmdArgs,
-        region: 'iad',
-        ttl_sec: 7200,
-        secrets,
-      });
-    } catch (err) {
-      if (err instanceof APIError && err.isQuotaExceeded()) {
-        await handleQuotaExceeded(err, client);
-        return;
-      }
-      throw err;
-    }
-
-    console.log(`Session created: ${session.label}`);
-    console.log(`  Reconnect with: catty connect ${session.label}`);
-    if (opts.syncBack) {
-      console.log(`  Sync-back: enabled (remote changes will sync to local)`);
-    }
-
-    // Upload workspace
-    if (opts.upload !== false) {
-      console.log('Uploading workspace...');
-      const uploadURL = buildUploadURL(session.connect_url);
-
-      await uploadWorkspace(
-        uploadURL,
-        session.connect_token,
-        session.headers['fly-force-instance-id'],
-        { excludeGit: opts.git === false }
-      );
-      console.log('Workspace uploaded.');
-    }
-
-    console.log(`Connecting to ${session.connect_url}...`);
-
-    // Connection loop with auto-reconnect
-    let reconnectAttempts = 0;
-
-    while (true) {
-      try {
-        const result: ConnectionResult = await connectToSession({
-          connectURL: session.connect_url,
-          connectToken: session.connect_token,
-          headers: session.headers,
-          syncBack: opts.syncBack !== false,
-        });
-
-        // Handle the connection result
-        if (result.type === 'exit') {
-          // Clean exit - process ended normally
-          process.exit(result.code);
-        } else if (result.type === 'interrupted') {
-          // User pressed Ctrl+C - exit cleanly, don't reconnect
-          process.exit(130);
-        } else if (result.type === 'replaced') {
-          // Connection was replaced by another client - don't reconnect
-          console.log('Session taken over by another client.');
-          process.exit(0);
-        } else if (result.type === 'disconnected') {
-          // Connection lost - try to reconnect
-          if (!autoReconnect) {
-            console.error(`Disconnected: ${result.reason}`);
-            process.exit(1);
-          }
-
-          reconnectAttempts++;
-          if (reconnectAttempts > MAX_RECONNECT_ATTEMPTS) {
-            console.error(`\x1b[31m✗ Failed to reconnect after ${MAX_RECONNECT_ATTEMPTS} attempts\x1b[0m`);
-            console.error(`Run 'catty connect ${session.label}' to try again manually.`);
-            process.exit(1);
-          }
-
-          console.log(`\x1b[33m⟳ Reconnecting (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...\x1b[0m`);
-          await sleep(RECONNECT_DELAY_MS);
-
-          // Refresh session info before reconnecting
-          try {
-            session = await client.getSession(session.label, true);
-            if (session.status === 'stopped') {
-              console.error(`\x1b[31m✗ Session has stopped\x1b[0m`);
-              process.exit(1);
-            }
-          } catch {
-            // Session lookup failed, try with existing info
-          }
-        }
-      } catch (err) {
-        if (reconnectAttempts > 0 && autoReconnect) {
-          reconnectAttempts++;
-          if (reconnectAttempts > MAX_RECONNECT_ATTEMPTS) {
-            console.error(`\x1b[31m✗ Failed to reconnect after ${MAX_RECONNECT_ATTEMPTS} attempts\x1b[0m`);
-            process.exit(1);
-          }
-          console.error(`\x1b[33m⟳ Reconnect failed, retrying (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...\x1b[0m`);
-          await sleep(RECONNECT_DELAY_MS);
+      const listResp = await sendCommand({ action: 'list' });
+      const existing = listResp.sessions?.find(s => s.name === sessionName);
+      
+      if (existing) {
+        if (existing.status === 'running') {
+          console.log(`Session '${sessionName}' already exists and is running.`);
+          console.log('Attaching...');
+          console.log('');
+          await attachToLocalSession(sessionName, opts.workdir);
+          return;
         } else {
-          throw err;
+          // Session exists but not running - recreate it
+          await sendCommand({ action: 'kill', name: sessionName });
         }
       }
+    } catch {
+      // Ignore errors checking existing sessions
+    }
+
+    // Create the session
+    console.log(`🐱 Creating local session '${sessionName}'...`);
+    console.log(`   Working directory: ${opts.workdir}`);
+
+    const cols = process.stdout.columns || 120;
+    const rows = process.stdout.rows || 40;
+
+    try {
+      const resp = await sendCommand({
+        action: 'create',
+        name: sessionName,
+        command: 'claude',
+        work_dir: opts.workdir,
+        cols,
+        rows,
+      });
+
+      if (!resp.success) {
+        console.error(`❌ Failed to create session: ${resp.error}`);
+        process.exit(1);
+      }
+
+      console.log(`✅ Session '${sessionName}' created`);
+      console.log('');
+
+      // Now attach to the session
+      await attachToLocalSession(sessionName, opts.workdir);
+
+    } catch (err: any) {
+      console.error(`❌ ${err.message}`);
+      process.exit(1);
     }
   });
 
-async function handleQuotaExceeded(error: APIError, client: APIClient): Promise<void> {
-  console.error('');
-  console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.error(`  ${error.message}`);
-  console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.error('');
+// Attach to a local session DIRECTLY via Unix socket (fast, no cloud roundtrip!)
+async function attachToLocalSession(sessionName: string, workDir: string): Promise<void> {
+  const socketPath = getSocketPath();
+  const terminal = new Terminal();
 
-  try {
-    const checkoutURL = await client.createCheckoutSession();
-    console.error(`  Upgrade: ${checkoutURL}`);
-  } catch (err) {
-    console.error(`  Failed to get upgrade URL: ${err instanceof Error ? err.message : String(err)}`);
-    console.error('  Please visit https://catty.dev to upgrade');
-  }
-  console.error('');
+  return new Promise((resolve, reject) => {
+    const client = net.createConnection(socketPath);
+    let buffer = '';
+    let attached = false;
+
+    const sendCmd = (cmd: object) => {
+      client.write(JSON.stringify(cmd) + '\n');
+    };
+
+    client.on('connect', () => {
+      console.log('💡 Tips:');
+      console.log('   • Phone: Devices → Sessions → Attach');
+      console.log(`   • Push to cloud: catty push ${sessionName}`);
+      console.log('   • Detach: Ctrl+C (session keeps running)');
+      console.log('');
+
+      // Send attach_stream command to enter streaming mode
+      sendCmd({
+        action: 'attach_stream',
+        name: sessionName,
+        cols: terminal.getSize().cols,
+        rows: terminal.getSize().rows,
+      });
+    });
+
+    client.on('data', (chunk: Buffer) => {
+      buffer += chunk.toString();
+      
+      // Parse newline-delimited JSON messages
+      let newlineIdx: number;
+      while ((newlineIdx = buffer.indexOf('\n')) !== -1) {
+        const line = buffer.slice(0, newlineIdx);
+        buffer = buffer.slice(newlineIdx + 1);
+        
+        if (!line.trim()) continue;
+        
+        try {
+          const msg = JSON.parse(line);
+          
+          if (!attached) {
+            // First message is the attach response
+            if (!msg.success) {
+              terminal.restore();
+              console.error(`❌ Failed to attach: ${msg.error}`);
+              client.end();
+              reject(new Error(msg.error));
+              return;
+            }
+            
+            attached = true;
+            
+            // Now in streaming mode - set up terminal
+            terminal.makeRaw();
+            
+            // Forward stdin directly to daemon
+            process.stdin.on('data', (data: Buffer) => {
+              sendCmd({
+                action: 'data',
+                data: data.toString('base64'),
+              });
+            });
+
+            // Handle resize
+            const handleResize = () => {
+              sendCmd({
+                action: 'resize',
+                cols: terminal.getSize().cols,
+                rows: terminal.getSize().rows,
+              });
+            };
+            terminal.onResize(handleResize);
+            continue;
+          }
+          
+          // Streaming messages
+          if (msg.type === 'data') {
+            // Decode base64 and write to stdout immediately
+            const decoded = Buffer.from(msg.data, 'base64');
+            process.stdout.write(decoded);
+          } else if (msg.type === 'exit') {
+            terminal.restore();
+            console.log(`\nSession exited with code ${msg.exit_code}`);
+            client.end();
+            resolve();
+          } else if (msg.type === 'error') {
+            terminal.restore();
+            console.error(`\nError: ${msg.error}`);
+            client.end();
+            reject(new Error(msg.error));
+          }
+        } catch (e) {
+          // Partial JSON, wait for more
+        }
+      }
+    });
+
+    client.on('error', (err) => {
+      terminal.restore();
+      console.error(`Connection error: ${err.message}`);
+      reject(err);
+    });
+
+    client.on('close', () => {
+      terminal.restore();
+      if (attached) {
+        console.log('\nDisconnected from session');
+      }
+      resolve();
+    });
+
+    // Handle Ctrl+C gracefully - detach but don't kill session
+    process.on('SIGINT', () => {
+      terminal.restore();
+      sendCmd({ action: 'detach' });
+      console.log('\n\nDetached from session (session still running)');
+      console.log(`Reattach with: catty local session attach ${sessionName}`);
+      client.end();
+      process.exit(0);
+    });
+  });
 }

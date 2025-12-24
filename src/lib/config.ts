@@ -1,8 +1,22 @@
+import * as os from 'os';
+import * as path from 'path';
+
 export const DEFAULT_API_ADDR = 'https://api.catty.dev';
 export const CREDENTIALS_DIR = '.catty';
 export const CREDENTIALS_FILE = 'credentials.json';
 
 export const SECRETS_FILE = 'secrets.json';
+
+// Get the catty config directory
+export function getCattyDir(): string {
+  return path.join(os.homedir(), CREDENTIALS_DIR);
+}
+
+// Get API address for local commands
+export function getApiAddr(): string {
+  if (process.env.CATTY_API_ADDR) return process.env.CATTY_API_ADDR;
+  return DEFAULT_API_ADDR;
+}
 export const MAX_UPLOAD_SIZE = 1024 * 1024 * 1024; // 1GB
 
 
