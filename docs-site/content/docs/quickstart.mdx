@@ -1,0 +1,96 @@
+---
+title: Quickstart
+description: Create your first session in under 2 minutes
+---
+
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+
+## Install the CLI
+
+```bash
+npm install -g @diggerhq/catty
+```
+
+Or use npx without installing:
+
+```bash
+npx @diggerhq/catty new
+```
+
+## Create a Session
+
+<Steps>
+<Step>
+
+### Login
+
+Authenticate with Catty (one-time):
+```bash
+catty login
+```
+
+</Step>
+
+<Step>
+
+### Start a Session
+
+Navigate to your project and start a session:
+```bash
+cd my-project
+catty new
+```
+This uploads your directory and connects you to Claude Code.
+
+</Step>
+</Steps>
+
+You're now connected. Work with Claude Code just like you would locally - file changes sync back in real-time.
+
+## Connect From Your Phone
+
+Your session is running in the cloud. Open [app.catty.dev](https://app.catty.dev) on your phone to:
+
+- See all your sessions on one dashboard
+- Connect and interact using Chat Mode
+- Answer prompts with quick action buttons
+
+Close your laptop and check in from anywhere. Start multiple sessions for different projects - manage them all from your phone.
+
+## CLI Basics
+
+Reconnect to a session:
+```bash
+catty connect brave-tiger-1234
+```
+
+List your sessions:
+```bash
+catty list
+```
+
+Download your workspace:
+```bash
+catty download brave-tiger-1234
+```
+
+## Next Steps
+
+<Cards>
+  <Card title="Mobile & Web" href="/docs/web/overview">
+    Check in from your phone
+  </Card>
+
+  <Card title="Sessions" href="/docs/concepts/sessions">
+    Session lifecycle and persistence
+  </Card>
+
+  <Card title="GitHub Integration" href="/docs/concepts/github">
+    Set up GitHub access for Claude
+  </Card>
+
+  <Card title="CLI Reference" href="/docs/cli/overview">
+    Full command reference
+  </Card>
+</Cards>

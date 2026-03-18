@@ -1,0 +1,19 @@
+{
+  "title": "Catty",
+  "pages": [
+    "---Getting Started---",
+    "index",
+    "quickstart",
+    "how-it-works",
+    "pricing",
+    "---Concepts---",
+    "concepts",
+    "---Mobile & Web---",
+    "web",
+    "---CLI Reference---",
+    "cli",
+    "---Support---",
+    "troubleshooting",
+    "faq"
+  ]
+}

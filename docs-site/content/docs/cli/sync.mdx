@@ -1,0 +1,61 @@
+---
+title: "catty sync"
+description: "Sync remote workspace to current directory"
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+Downloads a workspace snapshot and extracts it to your current directory, overwriting existing files.
+
+## Synopsis
+
+```bash
+catty sync <label> [options]
+```
+
+## Arguments
+
+| Argument | Description |
+|----------|-------------|
+| `label` | Session label (e.g., `brave-tiger-1234`) |
+
+## Options
+
+| Option | Description |
+|--------|-------------|
+| `--dry-run` | Show what would be synced without making changes |
+
+## Examples
+
+```bash
+# Preview what would be synced
+catty sync brave-tiger-1234 --dry-run
+
+# Sync to current directory
+catty sync brave-tiger-1234
+```
+
+## Difference from Download
+
+| Command | Behavior |
+|---------|----------|
+| `catty download` | Creates a new directory with the workspace |
+| `catty sync` | Overwrites files in current directory |
+
+Use `download` for backups. Use `sync` to update your working directory.
+
+<Callout type="warn">
+  `catty sync` overwrites local files with remote versions. Always use `--dry-run` first to preview changes.
+</Callout>
+
+## When to Use
+
+- Pull changes made while you were disconnected
+- Recover files if sync-back was disabled
+- Update local directory after reconnecting from different location
+
+## See Also
+
+- [catty download](/docs/cli/download) - Download to new directory
+- [catty connect](/docs/cli/connect) - Reconnect with live sync-back
+- [Sync-Back](/docs/concepts/sync-back) - Real-time sync during session

@@ -1,0 +1,73 @@
+---
+title: What is Catty?
+description: Run Claude Code in the cloud, control it from your phone
+---
+
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+
+Catty runs [Claude Code](https://docs.anthropic.com/en/docs/claude-code) sessions in the cloud. Start sessions from your laptop, then monitor and interact with them from your phone.
+
+## Key Benefits
+
+<Cards>
+  <Card title="Run Many in Parallel">
+    Start multiple sessions across different projects. Monitor them all from one dashboard on your phone.
+  </Card>
+
+  <Card title="Control From Your Phone">
+    Check progress, answer prompts, and interact with sessions from [app.catty.dev](https://app.catty.dev). Quick action buttons for common responses.
+  </Card>
+
+  <Card title="Sessions Keep Running">
+    Start a session at work, close your laptop, check in from your phone. Sessions persist until you stop them.
+  </Card>
+
+  <Card title="GitHub Integration">
+    Add your GitHub token once, and Claude can clone private repos, push commits, and create pull requests.
+  </Card>
+</Cards>
+
+## How It Works
+
+Catty has two parts that work together:
+
+<Steps>
+<Step>
+
+### Start from your laptop
+
+The **CLI** creates sessions and uploads your code. File changes sync back to your local directory in real-time.
+```bash
+catty new
+```
+
+</Step>
+
+<Step>
+
+### Continue from anywhere
+
+The **mobile dashboard** at [app.catty.dev](https://app.catty.dev) shows all your sessions. Connect from your phone to check progress or answer prompts.
+
+</Step>
+</Steps>
+
+| | CLI | Mobile & Web |
+|---|-----|--------------|
+| **Use for** | Starting sessions | Continuing from anywhere |
+| **Uploads code** | Yes | No |
+| **Syncs files back** | Yes | No |
+| **Works on phone** | No | Yes |
+
+## Get Started
+
+<Cards>
+  <Card title="Quickstart" href="/docs/quickstart">
+    Install the CLI and create your first session
+  </Card>
+
+  <Card title="Mobile & Web" href="/docs/web/overview">
+    Connect to sessions from your phone
+  </Card>
+</Cards>

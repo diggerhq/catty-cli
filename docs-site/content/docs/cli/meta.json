@@ -1,0 +1,17 @@
+{
+  "title": "CLI Reference",
+  "pages": [
+    "overview",
+    "new",
+    "connect",
+    "list",
+    "stop",
+    "download",
+    "sync",
+    "secrets",
+    "login",
+    "logout",
+    "update",
+    "version"
+  ]
+}
